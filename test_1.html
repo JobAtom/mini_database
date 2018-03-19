@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<script>
+    function PlaySound(melody) {
+        alert("On Press of "+melody);
+        var path = ""
+        var snd = new Audio(path + melody + ".mp3");
+        snd.play();
+    }
+</script>
+
+</head>
+<body>
+
+<button onclick="PlaySound('1')"> button1</button>
+<button onclick="PlaySound('2')"> button2</button>
+
+</body>
+
+</html>
