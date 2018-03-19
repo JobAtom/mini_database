@@ -1,0 +1,599 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Harry's - A Closer Look</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+		<link rel="shortcut icon" href="favicon.ico">
+		<script>
+/* Modernizr 2.8.3 (Custom Build) | MIT & BSD
+ * Build: http://modernizr.com/download/#-fontface-backgroundsize-applicationcache-canvas-hashchange-history-audio-video-inlinesvg-svg-svgclippaths-touch-webgl-shiv-mq-cssclasses-teststyles-testprop-testallprops-hasevent-prefixes-domprefixes-load
+ */
+;window.Modernizr=function(a,b,c){function C(a){j.cssText=a}function D(a,b){return C(m.join(a+";")+(b||""))}function E(a,b){return typeof a===b}function F(a,b){return!!~(""+a).indexOf(b)}function G(a,b){for(var d in a){var e=a[d];if(!F(e,"-")&&j[e]!==c)return b=="pfx"?e:!0}return!1}function H(a,b,d){for(var e in a){var f=b[a[e]];if(f!==c)return d===!1?a[e]:E(f,"function")?f.bind(d||b):f}return!1}function I(a,b,c){var d=a.charAt(0).toUpperCase()+a.slice(1),e=(a+" "+o.join(d+" ")+d).split(" ");return E(b,"string")||E(b,"undefined")?G(e,b):(e=(a+" "+p.join(d+" ")+d).split(" "),H(e,b,c))}var d="2.8.3",e={},f=!0,g=b.documentElement,h="modernizr",i=b.createElement(h),j=i.style,k,l={}.toString,m=" -webkit- -moz- -o- -ms- ".split(" "),n="Webkit Moz O ms",o=n.split(" "),p=n.toLowerCase().split(" "),q={svg:"http://www.w3.org/2000/svg"},r={},s={},t={},u=[],v=u.slice,w,x=function(a,c,d,e){var f,i,j,k,l=b.createElement("div"),m=b.body,n=m||b.createElement("body");if(parseInt(d,10))while(d--)j=b.createElement("div"),j.id=e?e[d]:h+(d+1),l.appendChild(j);return f=["&#173;",'<style id="s',h,'">',a,"</style>"].join(""),l.id=h,(m?l:n).innerHTML+=f,n.appendChild(l),m||(n.style.background="",n.style.overflow="hidden",k=g.style.overflow,g.style.overflow="hidden",g.appendChild(n)),i=c(l,a),m?l.parentNode.removeChild(l):(n.parentNode.removeChild(n),g.style.overflow=k),!!i},y=function(b){var c=a.matchMedia||a.msMatchMedia;if(c)return c(b)&&c(b).matches||!1;var d;return x("@media "+b+" { #"+h+" { position: absolute; } }",function(b){d=(a.getComputedStyle?getComputedStyle(b,null):b.currentStyle)["position"]=="absolute"}),d},z=function(){function d(d,e){e=e||b.createElement(a[d]||"div"),d="on"+d;var f=d in e;return f||(e.setAttribute||(e=b.createElement("div")),e.setAttribute&&e.removeAttribute&&(e.setAttribute(d,""),f=E(e[d],"function"),E(e[d],"undefined")||(e[d]=c),e.removeAttribute(d))),e=null,f}var a={select:"input",change:"input",submit:"form",reset:"form",error:"img",load:"img",abort:"img"};return d}(),A={}.hasOwnProperty,B;!E(A,"undefined")&&!E(A.call,"undefined")?B=function(a,b){return A.call(a,b)}:B=function(a,b){return b in a&&E(a.constructor.prototype[b],"undefined")},Function.prototype.bind||(Function.prototype.bind=function(b){var c=this;if(typeof c!="function")throw new TypeError;var d=v.call(arguments,1),e=function(){if(this instanceof e){var a=function(){};a.prototype=c.prototype;var f=new a,g=c.apply(f,d.concat(v.call(arguments)));return Object(g)===g?g:f}return c.apply(b,d.concat(v.call(arguments)))};return e}),r.canvas=function(){var a=b.createElement("canvas");return!!a.getContext&&!!a.getContext("2d")},r.webgl=function(){return!!a.WebGLRenderingContext},r.touch=function(){var c;return"ontouchstart"in a||a.DocumentTouch&&b instanceof DocumentTouch?c=!0:x(["@media (",m.join("touch-enabled),("),h,")","{#modernizr{top:9px;position:absolute}}"].join(""),function(a){c=a.offsetTop===9}),c},r.hashchange=function(){return z("hashchange",a)&&(b.documentMode===c||b.documentMode>7)},r.history=function(){return!!a.history&&!!history.pushState},r.backgroundsize=function(){return I("backgroundSize")},r.fontface=function(){var a;return x('@font-face {font-family:"font";src:url("https://")}',function(c,d){var e=b.getElementById("smodernizr"),f=e.sheet||e.styleSheet,g=f?f.cssRules&&f.cssRules[0]?f.cssRules[0].cssText:f.cssText||"":"";a=/src/i.test(g)&&g.indexOf(d.split(" ")[0])===0}),a},r.video=function(){var a=b.createElement("video"),c=!1;try{if(c=!!a.canPlayType)c=new Boolean(c),c.ogg=a.canPlayType('video/ogg; codecs="theora"').replace(/^no$/,""),c.h264=a.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/,""),c.webm=a.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/,"")}catch(d){}return c},r.audio=function(){var a=b.createElement("audio"),c=!1;try{if(c=!!a.canPlayType)c=new Boolean(c),c.ogg=a.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/,""),c.mp3=a.canPlayType("audio/mpeg;").replace(/^no$/,""),c.wav=a.canPlayType('audio/wav; codecs="1"').replace(/^no$/,""),c.m4a=(a.canPlayType("audio/x-m4a;")||a.canPlayType("audio/aac;")).replace(/^no$/,"")}catch(d){}return c},r.applicationcache=function(){return!!a.applicationCache},r.svg=function(){return!!b.createElementNS&&!!b.createElementNS(q.svg,"svg").createSVGRect},r.inlinesvg=function(){var a=b.createElement("div");return a.innerHTML="<svg/>",(a.firstChild&&a.firstChild.namespaceURI)==q.svg},r.svgclippaths=function(){return!!b.createElementNS&&/SVGClipPath/.test(l.call(b.createElementNS(q.svg,"clipPath")))};for(var J in r)B(r,J)&&(w=J.toLowerCase(),e[w]=r[J](),u.push((e[w]?"":"no-")+w));return e.addTest=function(a,b){if(typeof a=="object")for(var d in a)B(a,d)&&e.addTest(d,a[d]);else{a=a.toLowerCase();if(e[a]!==c)return e;b=typeof b=="function"?b():b,typeof f!="undefined"&&f&&(g.className+=" "+(b?"":"no-")+a),e[a]=b}return e},C(""),i=k=null,function(a,b){function l(a,b){var c=a.createElement("p"),d=a.getElementsByTagName("head")[0]||a.documentElement;return c.innerHTML="x<style>"+b+"</style>",d.insertBefore(c.lastChild,d.firstChild)}function m(){var a=s.elements;return typeof a=="string"?a.split(" "):a}function n(a){var b=j[a[h]];return b||(b={},i++,a[h]=i,j[i]=b),b}function o(a,c,d){c||(c=b);if(k)return c.createElement(a);d||(d=n(c));var g;return d.cache[a]?g=d.cache[a].cloneNode():f.test(a)?g=(d.cache[a]=d.createElem(a)).cloneNode():g=d.createElem(a),g.canHaveChildren&&!e.test(a)&&!g.tagUrn?d.frag.appendChild(g):g}function p(a,c){a||(a=b);if(k)return a.createDocumentFragment();c=c||n(a);var d=c.frag.cloneNode(),e=0,f=m(),g=f.length;for(;e<g;e++)d.createElement(f[e]);return d}function q(a,b){b.cache||(b.cache={},b.createElem=a.createElement,b.createFrag=a.createDocumentFragment,b.frag=b.createFrag()),a.createElement=function(c){return s.shivMethods?o(c,a,b):b.createElem(c)},a.createDocumentFragment=Function("h,f","return function(){var n=f.cloneNode(),c=n.createElement;h.shivMethods&&("+m().join().replace(/[\w\-]+/g,function(a){return b.createElem(a),b.frag.createElement(a),'c("'+a+'")'})+");return n}")(s,b.frag)}function r(a){a||(a=b);var c=n(a);return s.shivCSS&&!g&&!c.hasCSS&&(c.hasCSS=!!l(a,"article,aside,dialog,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}mark{background:#FF0;color:#000}template{display:none}")),k||q(a,c),a}var c="3.7.0",d=a.html5||{},e=/^<|^(?:button|map|select|textarea|object|iframe|option|optgroup)$/i,f=/^(?:a|b|code|div|fieldset|h1|h2|h3|h4|h5|h6|i|label|li|ol|p|q|span|strong|style|table|tbody|td|th|tr|ul)$/i,g,h="_html5shiv",i=0,j={},k;(function(){try{var a=b.createElement("a");a.innerHTML="<xyz></xyz>",g="hidden"in a,k=a.childNodes.length==1||function(){b.createElement("a");var a=b.createDocumentFragment();return typeof a.cloneNode=="undefined"||typeof a.createDocumentFragment=="undefined"||typeof a.createElement=="undefined"}()}catch(c){g=!0,k=!0}})();var s={elements:d.elements||"abbr article aside audio bdi canvas data datalist details dialog figcaption figure footer header hgroup main mark meter nav output progress section summary template time video",version:c,shivCSS:d.shivCSS!==!1,supportsUnknownElements:k,shivMethods:d.shivMethods!==!1,type:"default",shivDocument:r,createElement:o,createDocumentFragment:p};a.html5=s,r(b)}(this,b),e._version=d,e._prefixes=m,e._domPrefixes=p,e._cssomPrefixes=o,e.mq=y,e.hasEvent=z,e.testProp=function(a){return G([a])},e.testAllProps=I,e.testStyles=x,g.className=g.className.replace(/(^|\s)no-js(\s|$)/,"$1$2")+(f?" js "+u.join(" "):""),e}(this,this.document),function(a,b,c){function d(a){return"[object Function]"==o.call(a)}function e(a){return"string"==typeof a}function f(){}function g(a){return!a||"loaded"==a||"complete"==a||"uninitialized"==a}function h(){var a=p.shift();q=1,a?a.t?m(function(){("c"==a.t?B.injectCss:B.injectJs)(a.s,0,a.a,a.x,a.e,1)},0):(a(),h()):q=0}function i(a,c,d,e,f,i,j){function k(b){if(!o&&g(l.readyState)&&(u.r=o=1,!q&&h(),l.onload=l.onreadystatechange=null,b)){"img"!=a&&m(function(){t.removeChild(l)},50);for(var d in y[c])y[c].hasOwnProperty(d)&&y[c][d].onload()}}var j=j||B.errorTimeout,l=b.createElement(a),o=0,r=0,u={t:d,s:c,e:f,a:i,x:j};1===y[c]&&(r=1,y[c]=[]),"object"==a?l.data=c:(l.src=c,l.type=a),l.width=l.height="0",l.onerror=l.onload=l.onreadystatechange=function(){k.call(this,r)},p.splice(e,0,u),"img"!=a&&(r||2===y[c]?(t.insertBefore(l,s?null:n),m(k,j)):y[c].push(l))}function j(a,b,c,d,f){return q=0,b=b||"j",e(a)?i("c"==b?v:u,a,b,this.i++,c,d,f):(p.splice(this.i++,0,a),1==p.length&&h()),this}function k(){var a=B;return a.loader={load:j,i:0},a}var l=b.documentElement,m=a.setTimeout,n=b.getElementsByTagName("script")[0],o={}.toString,p=[],q=0,r="MozAppearance"in l.style,s=r&&!!b.createRange().compareNode,t=s?l:n.parentNode,l=a.opera&&"[object Opera]"==o.call(a.opera),l=!!b.attachEvent&&!l,u=r?"object":l?"script":"img",v=l?"script":u,w=Array.isArray||function(a){return"[object Array]"==o.call(a)},x=[],y={},z={timeout:function(a,b){return b.length&&(a.timeout=b[0]),a}},A,B;B=function(a){function b(a){var a=a.split("!"),b=x.length,c=a.pop(),d=a.length,c={url:c,origUrl:c,prefixes:a},e,f,g;for(f=0;f<d;f++)g=a[f].split("="),(e=z[g.shift()])&&(c=e(c,g));for(f=0;f<b;f++)c=x[f](c);return c}function g(a,e,f,g,h){var i=b(a),j=i.autoCallback;i.url.split(".").pop().split("?").shift(),i.bypass||(e&&(e=d(e)?e:e[a]||e[g]||e[a.split("/").pop().split("?")[0]]),i.instead?i.instead(a,e,f,g,h):(y[i.url]?i.noexec=!0:y[i.url]=1,f.load(i.url,i.forceCSS||!i.forceJS&&"css"==i.url.split(".").pop().split("?").shift()?"c":c,i.noexec,i.attrs,i.timeout),(d(e)||d(j))&&f.load(function(){k(),e&&e(i.origUrl,h,g),j&&j(i.origUrl,h,g),y[i.url]=2})))}function h(a,b){function c(a,c){if(a){if(e(a))c||(j=function(){var a=[].slice.call(arguments);k.apply(this,a),l()}),g(a,j,b,0,h);else if(Object(a)===a)for(n in m=function(){var b=0,c;for(c in a)a.hasOwnProperty(c)&&b++;return b}(),a)a.hasOwnProperty(n)&&(!c&&!--m&&(d(j)?j=function(){var a=[].slice.call(arguments);k.apply(this,a),l()}:j[n]=function(a){return function(){var b=[].slice.call(arguments);a&&a.apply(this,b),l()}}(k[n])),g(a[n],j,b,n,h))}else!c&&l()}var h=!!a.test,i=a.load||a.both,j=a.callback||f,k=j,l=a.complete||f,m,n;c(h?a.yep:a.nope,!!i),i&&c(i)}var i,j,l=this.yepnope.loader;if(e(a))g(a,0,l,0);else if(w(a))for(i=0;i<a.length;i++)j=a[i],e(j)?g(j,0,l,0):w(j)?B(j):Object(j)===j&&h(j,l);else Object(a)===a&&h(a,l)},B.addPrefix=function(a,b){z[a]=b},B.addFilter=function(a){x.push(a)},B.errorTimeout=1e4,null==b.readyState&&b.addEventListener&&(b.readyState="loading",b.addEventListener("DOMContentLoaded",A=function(){b.removeEventListener("DOMContentLoaded",A,0),b.readyState="complete"},0)),a.yepnope=k(),a.yepnope.executeStack=h,a.yepnope.injectJs=function(a,c,d,e,i,j){var k=b.createElement("script"),l,o,e=e||B.errorTimeout;k.src=a;for(o in d)k.setAttribute(o,d[o]);c=j?h:c||f,k.onreadystatechange=k.onload=function(){!l&&g(k.readyState)&&(l=1,c(),k.onload=k.onreadystatechange=null)},m(function(){l||(l=1,c(1))},e),i?k.onload():n.parentNode.insertBefore(k,n)},a.yepnope.injectCss=function(a,c,d,e,g,i){var e=b.createElement("link"),j,c=i?h:c||f;e.href=a,e.rel="stylesheet",e.type="text/css";for(j in d)e.setAttribute(j,d[j]);g||(n.parentNode.insertBefore(e,n),m(c,0))}}(this,document),Modernizr.load=function(){yepnope.apply(window,[].slice.call(arguments,0))};
+
+		</script>
+
+		<link rel="stylesheet" type="text/css" href="https://closer.harrys.com/assets/css/main.min.css">
+
+	</head>
+
+	<body class="center-logo track-truman">
+		<!-- Google Tag Manager -->
+		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PFFDQH"
+		height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+		new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+		j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+		'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer','GTM-PFFDQH');</script>
+		<!-- End Google Tag Manager -->
+
+		<svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+			<defs>
+				<symbol id="icon-new-corner" viewBox="0 0 32 32">
+					<title>new-corner</title>
+					<path fill="#3ca6e0" class="path1 fill-color3" d="M0 0h32l-32 32z"></path>
+					<path fill="#fefefe" class="path2 fill-color5" d="M3.37 14.953c-0.052-0.052-0.047-0.14 0.005-0.192l0.129-0.129 4.451 0.135 0.005-0.005-2.142-2.142c-0.052-0.052-0.057-0.14-0.001-0.197l0.477-0.477c0.052-0.052 0.145-0.052 0.197 0l3.49 3.491c0.052 0.051 0.047 0.14-0.005 0.192l-0.124 0.125-4.549-0.213-0.005 0.005 2.229 2.23c0.052 0.052 0.057 0.14 0 0.197l-0.472 0.472c-0.051 0.051-0.145 0.051-0.197-0.001l-3.489-3.49z"></path>
+					<path fill="#fefefe" class="path3 fill-color5" d="M8.031 10.405c-0.052-0.052-0.057-0.14 0-0.197l2.111-2.111c0.057-0.057 0.145-0.053 0.197 0l0.425 0.425c0.052 0.052 0.057 0.14 0 0.197l-1.535 1.535 0.851 0.851 1.281-1.281c0.052-0.052 0.146-0.052 0.198 0l0.43 0.43c0.057 0.057 0.052 0.145 0 0.197l-1.281 1.281 0.907 0.908 1.535-1.535c0.057-0.057 0.145-0.052 0.198 0l0.424 0.425c0.052 0.053 0.057 0.141 0 0.197l-2.111 2.111c-0.057 0.057-0.145 0.052-0.197 0l-3.433-3.433z"></path>
+					<path fill="#fefefe" class="path4 fill-color5" d="M11.38 7.107c-0.093-0.051-0.103-0.145-0.031-0.218l0.477-0.477c0.041-0.041 0.12-0.047 0.166-0.021l2.609 1.53 0.021-0.021-1.312-2.961c-0.021-0.041-0.021-0.094 0.031-0.145l0.094-0.093c0.051-0.052 0.103-0.052 0.145-0.031l2.967 1.307 0.021-0.021-1.54-2.598c-0.026-0.047-0.022-0.125 0.020-0.167l0.477-0.477c0.072-0.073 0.166-0.062 0.217 0.031l2.505 4.465c0.031 0.052 0.021 0.125-0.021 0.166l-0.083 0.083c-0.047 0.047-0.104 0.051-0.145 0.031l-3.278-1.421-0.026 0.026 1.431 3.267c0.016 0.047 0.021 0.094-0.031 0.146l-0.083 0.083c-0.041 0.041-0.114 0.052-0.166 0.020l-4.466-2.505z"></path>
+				</symbol>
+				<symbol id="icon-swipe-up" viewBox="0 0 19 32">
+					<title>swipe-up</title>
+					<path class="path1 fill-color1" d="M2.372 31.209c-0.417 0-0.821-0.22-1.037-0.61-0.318-0.572-0.11-1.294 0.462-1.611l7.122-3.95c0.358-0.2 0.793-0.198 1.151 0l7.1 3.947c0.571 0.319 0.777 1.039 0.46 1.612-0.318 0.57-1.038 0.78-1.612 0.46l-6.524-3.628-6.547 3.63c-0.183 0.103-0.38 0.151-0.575 0.151z"></path>
+					<path class="path2 fill-color1" d="M2.372 19.358c-0.417 0-0.821-0.22-1.037-0.61-0.318-0.572-0.11-1.294 0.462-1.611l7.122-3.95c0.358-0.198 0.793-0.199 1.151 0l7.1 3.947c0.571 0.319 0.777 1.039 0.46 1.612-0.318 0.57-1.038 0.779-1.612 0.46l-6.524-3.627-6.547 3.63c-0.183 0.102-0.38 0.149-0.575 0.149z"></path>
+					<path class="path3 fill-color1" d="M2.372 7.506c-0.417 0-0.821-0.22-1.037-0.61-0.318-0.572-0.111-1.293 0.462-1.611l7.122-3.95c0.358-0.198 0.793-0.198 1.151 0l7.1 3.948c0.571 0.319 0.777 1.039 0.46 1.612s-1.038 0.777-1.612 0.46l-6.526-3.628-6.547 3.631c-0.181 0.101-0.379 0.148-0.574 0.148z"></path>
+				</symbol>
+				<symbol id="icon-arrow-down" viewBox="0 0 21 32">
+					<title>arrow-down</title>
+					<path fill="#185674" class="path1 fill-color1" d="M9.536 0h2.667v28.293h-2.667v-28.293z"></path>
+					<path fill="#185674" class="path2 fill-color1" d="M10.901 31.049l-10.901-8.688 1.661-2.087 9.173 7.311 8.449-7.279 1.74 2.021z"></path>
+				</symbol>
+				<symbol id="icon-arrow-reverse" viewBox="0 0 34 32">
+					<title>arrow-reverse</title>
+					<path class="path1 fill-color2" d="M17.742 0c-5.538 0-9.484 3.174-10.218 3.81l2.618 3.024c0.546-0.472 3.482-2.834 7.6-2.834 6.4 0 11.606 5.206 11.606 11.606 0 6.398-5.206 11.604-11.606 11.604-4.164 0-7.346-2.516-9.282-5.18l5.034-2.922-10.986-3.15-2.508 10.986 4.966-2.884c2.74 3.968 7.3 7.15 12.776 7.15 8.604 0 15.606-7 15.606-15.604 0-8.606-7.002-15.606-15.606-15.606z"></path>
+				</symbol>
+				<symbol id="icon-chevron-down" viewBox="0 0 87 32">
+					<title>chevron-down</title>
+					<path fill="#a9a9a9" class="path1 fill-color4" d="M43.578 30.545c-0.713 0-1.423-0.175-2.068-0.524l-37.76-20.346c-2.121-1.143-2.915-3.788-1.772-5.911 1.143-2.121 3.793-2.912 5.911-1.772l35.695 19.232 35.808-19.252c2.118-1.14 4.771-0.346 5.908 1.777 1.143 2.124 0.346 4.768-1.777 5.911l-37.876 20.364c-0.646 0.346-1.356 0.521-2.068 0.521z"></path>
+				</symbol>
+				<symbol id="icon-logo-h" viewBox="0 0 43 32">
+					<title>logo-h</title>
+					<path fill="#185674" class="path1 fill-color1" d="M38.094 0c-2.519 0-4.494 1.8-4.494 4.091 0 2.16 1.767 3.857 4.018 3.857 0.34 0 0.856-0.031 1.356-0.158 0.002 0.053 0.006 0.111 0.006 0.17 0 2.368-2.052 3.151-2.317 3.17-0.288 0-0.518 0.042-0.707 0.123-0.31 0.143-0.495 0.401-0.495 0.696 0 0.462 0.472 0.852 1.029 0.852 3.639 0 6.711-3.375 6.711-7.368 0-3.564-2.57-5.432-5.106-5.432z"></path>
+					<path fill="#185674" class="path2 fill-color1" d="M0 0.869c0-0.455 0.418-0.869 0.88-0.869h4.309c0.507 0 0.882 0.414 0.882 0.869v12.114h15.105v-12.114c0-0.455 0.373-0.869 0.884-0.869h4.261c0.462 0 0.88 0.414 0.88 0.869v30.263c0 0.453-0.418 0.867-0.88 0.867h-4.261c-0.511 0-0.884-0.414-0.884-0.867v-12.618h-15.105v12.618c0 0.453-0.374 0.867-0.882 0.867h-4.309c-0.462 0-0.88-0.414-0.88-0.867v-30.263z"></path>
+				</symbol>
+				<symbol id="icon-logo-harrys" viewBox="0 0 184 32">
+					<title>logo-harrys</title>
+					<path fill="#185674" class="path1 fill-color1" d="M0 1.867c0-0.439 0.399-0.839 0.837-0.839h4.106c0.488 0 0.841 0.399 0.841 0.839v11.727h14.391v-11.727c0-0.439 0.353-0.839 0.841-0.839h4.060c0.44 0 0.841 0.399 0.841 0.839v29.292c0 0.444-0.401 0.841-0.841 0.841h-4.060c-0.488 0-0.841-0.396-0.841-0.841v-12.21h-14.391v12.21c0 0.444-0.353 0.841-0.841 0.841h-4.106c-0.438 0-0.837-0.396-0.837-0.841v-29.292z"></path>
+					<path fill="#185674" class="path2 fill-color1" d="M49.8 21.431l-4.416-9.74h-0.133l-4.326 9.74h8.875zM30.728 30.855l13.728-29.783c0.132-0.264 0.356-0.486 0.749-0.486h0.444c0.442 0 0.617 0.222 0.749 0.486l13.595 29.783c0.27 0.572-0.078 1.145-0.749 1.145h-3.842c-0.658 0-0.968-0.264-1.279-0.884l-2.161-4.777h-13.2l-2.165 4.777c-0.176 0.444-0.575 0.884-1.279 0.884h-3.842c-0.663 0-1.014-0.574-0.75-1.145v0z"></path>
+					<path fill="#185674" class="path3 fill-color1" d="M77.788 15.14c2.338 0 4.371-2.031 4.371-4.508 0-2.347-2.033-4.297-4.371-4.297h-7.196v8.806h7.196zM64.808 1.867c0-0.439 0.353-0.839 0.84-0.839h12.622c5.3 0 9.63 4.247 9.63 9.513 0 4.073-2.699 7.388-6.537 8.938l6.050 11.239c0.306 0.579 0 1.281-0.75 1.281h-4.636c-0.399 0-0.62-0.217-0.708-0.396l-5.87-11.728h-4.899v11.283c0 0.445-0.404 0.841-0.838 0.841h-4.063c-0.488 0-0.84-0.396-0.84-0.841v-29.292z"></path>
+					<path fill="#185674" class="path4 fill-color1" d="M107.050 15.14c2.339 0 4.371-2.031 4.371-4.508 0-2.347-2.032-4.297-4.371-4.297h-7.195v8.806h7.195zM94.075 1.867c0-0.439 0.348-0.839 0.835-0.839h12.628c5.294 0 9.621 4.247 9.621 9.513 0 4.073-2.694 7.388-6.532 8.938l6.047 11.239c0.311 0.579 0 1.281-0.75 1.281h-4.635c-0.397 0-0.618-0.217-0.705-0.396l-5.875-11.728h-4.897v11.283c0 0.445-0.398 0.841-0.841 0.841h-4.062c-0.488 0-0.835-0.396-0.835-0.841v-29.292z"></path>
+					<path fill="#185674" class="path5 fill-color1" d="M130.292 17.091l-10.055-14.783c-0.356-0.573 0-1.279 0.702-1.279h4.493c0.36 0 0.586 0.22 0.715 0.399l7.056 10.177 7.070-10.177c0.132-0.179 0.343-0.399 0.708-0.399h4.541c0.709 0 1.061 0.706 0.709 1.279l-10.194 14.74v14.112c0 0.444-0.406 0.841-0.844 0.841h-4.058c-0.483 0-0.845-0.396-0.845-0.841v-14.069z"></path>
+					<path fill="#185674" class="path6 fill-color1" d="M162.743 27.219l1.585-2.741c0.352-0.622 1.105-0.622 1.508-0.306 0.215 0.127 3.791 2.743 6.66 2.743 2.299 0 4.021-1.502 4.021-3.412 0-2.253-1.905-3.796-5.607-5.31-4.151-1.681-8.299-4.333-8.299-9.551 0-3.94 2.91-8.495 9.932-8.495 4.5 0 7.943 2.3 8.827 2.964 0.446 0.265 0.57 1.020 0.265 1.459l-1.671 2.522c-0.356 0.525-1.025 0.882-1.55 0.525-0.353-0.217-3.71-2.427-6.132-2.427-2.518 0-3.889 1.683-3.889 3.096 0 2.083 1.631 3.494 5.209 4.953 4.28 1.73 9.228 4.295 9.228 10.003 0 4.556-3.931 8.759-10.159 8.759-5.556 0-8.822-2.61-9.703-3.447-0.403-0.404-0.623-0.622-0.224-1.334z"></path>
+					<path fill="#185674" class="path7 fill-color1" d="M154.090 1.028c-2.342 0-4.167 1.831-4.167 4.177 0 2.203 1.635 3.933 3.72 3.933 0.314 0 0.795-0.027 1.257-0.158 0.004 0.060 0.004 0.113 0.004 0.176 0 2.417-1.896 3.216-2.143 3.236-0.268 0-0.485 0.045-0.658 0.121-0.292 0.148-0.454 0.412-0.454 0.713 0 0.467 0.434 0.868 0.949 0.868 3.37 0 6.219-3.444 6.219-7.521 0-3.641-2.377-5.546-4.727-5.546z"></path>
+				</symbol>
+				<symbol id="icon-pause" viewBox="0 0 26 32">
+					<title>pause</title>
+					<path fill="#185674" class="path1 fill-color1" d="M0 0h9.6v32h-9.6v-32z"></path>
+					<path fill="#185674" class="path2 fill-color1" d="M16 0h9.6v32h-9.6v-32z"></path>
+				</symbol>
+				<symbol id="icon-play" viewBox="0 0 24 32">
+					<title>play</title>
+					<path fill="#185674" class="path1 fill-color1" d="M0 32v-32l24 16z"></path>
+				</symbol>
+			</defs>
+		</svg>
+
+		<div class="content-wrapper">
+			<header class="site-header">
+				<h1><a href="https://popuband.com/" class="logo-">populele</a></h1>
+				<div class="shop-buttons-container">
+					<a class="shop-blades-button small-button" href="https://www.harrys.com/products/harrys-blades">Shop Blades</a>
+					<a class="shop-truman-button small-button" href="https://www.harrys.com/products/the-truman">Shop Truman</a>
+					<a class="shop-winston-button small-button" href="https://www.harrys.com/products/the-winston">Shop Winston</a>
+				</div>
+				<div class="mobile-shop-buttons-container">
+					<a class="shop-blades-button small-button" href="https://www.harrys.com/products/harrys-blades" >Shop</a>
+					<a class="shop-truman-button small-button" href="https://www.harrys.com/products/the-truman">Shop</a>
+					<a class="shop-winston-button small-button" href="https://www.harrys.com/products/the-winston">Shop</a>
+				</div>
+				<a class="mobile-menu-trigger">
+					<span class="current-section-title">Home</span>
+					<span class="symbol-chevron">
+						<span></span>
+					</span>
+				</a>
+			</header>
+			<!-- <svg class="icon icon-new-corner"><use xlink:href="#icon-new-corner"></use></svg> -->
+			<div class="handle-select-nav">
+				<ul>
+					<li class="first">
+						<a class="winston-nav-link" data-target="winston"><span>Winston</span></a>
+					</li>
+					<li class="last">
+						<a class="truman-nav-link" data-target="truman"><span>Truman</span></a>
+					</li>
+				</ul>
+			</div>
+			<div class="handle-switch-hint">
+				<a href="#" class="swipe-to-continue next-section-trigger">
+					<svg class="icon icon-swipe-up"><use xlink:href="#icon-swipe-up"></use></svg>
+					Swipe to continue
+				</a>
+				<div class="tooltip">
+					Switch to the Winston handle at anytime.
+				</div>
+			</div>
+
+			<nav class="mobile-menu">
+				<ul>
+					<li data-menuanchor="home" class="active"><a href="#home">Home</a></li>
+					<li data-menuanchor="flex-hinge"><a href="#flex-hinge">Flex Hinge</a></li>
+					<li data-menuanchor="precision-trimmer"><a href="#precision-trimmer">Precision Trimmer</a></li>
+					<li data-menuanchor="blades"><a href="#blades">Blades</a></li>
+					<li data-menuanchor="sharp-edge"><a href="#sharp-edge">Sharp Edge</a></li>
+					<li data-menuanchor="steel"><a href="#steel">Steel</a></li>
+					<li data-menuanchor="ergonomic-shape"><a href="#ergonomic-shape">Ergonomic Shape</a></li>
+					<li data-menuanchor="grip"><a href="#grip">Grip</a></li>
+					<li data-menuanchor="personalize"><a href="#personalize">Personalize</a></li>
+				</ul>
+			</nav>
+
+			<div class="fixed-content">
+				<div class="canvid-wrapper">
+					<img class="still-image" src="" />
+				</div>
+
+				<div class="intro-stills">
+					<img class="winston" src="shopify/7.png"  />
+					<img class="truman" src="shopify/6.png" />
+				</div>
+
+				<div class="handle-stills">
+					<div class="image-container image-container-truman right">
+						<figure class="truman truman-orange default">
+							<img src="https://closer.harrys.com/assets/img/truman-orange-cropped.jpg" />
+						</figure>
+						<figure class="truman truman-green">
+							<img src="https://closer.harrys.com/assets/img/truman-green-cropped.jpg" />
+						</figure>
+						<figure class="truman truman-blue" >
+							<img src="https://closer.harrys.com/assets/img/truman-blue-cropped.jpg" />
+						</figure>
+					</div>
+					<div class="image-container image-container-winston left">
+						<div class="engraving-bubble animated"></div>
+						<figure class="winston winston-default">
+							<img src="https://closer.harrys.com/assets/img/winston-default-cropped.jpg" />
+						</figure>
+						<figure class="winston winston-reverse">
+							<img src="https://closer.harrys.com/assets/img/winston-reverse-cropped.jpg" />
+						</figure>
+						<a class="winston-reverse-trigger subheader-large"><svg class="icon icon-arrow-reverse"><use xlink:href="#icon-arrow-reverse"></use></svg> <span>See other side</span></a>
+					</div>
+				</div>
+
+				<section class="fixed-content-section intro section-1">
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="centered-copy-wrapper">
+									<h2>A closer look at<br /> the world’s first smart ukulele.</h2>
+									<p>Our focus has always been our customers, our quality, and fair prices. We’re proud to continue that tradition with this generation of our blades and handles.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<a href="#" class="scroll-to-explore next-section-trigger">
+						<div class="symbol-swipe-up">
+							<span class="first"></span>
+							<span class="second"></span>
+							<span class="third"></span>
+						</div>
+						<span class="desktop-prompt">Scroll to explore</span>
+						<span class="mobile-prompt">Swipe to explore</span>
+						<svg class="icon icon-arrow-down"><use xlink:href="#icon-arrow-down"></use></svg>
+					</a>
+				</section>
+				<section class="fixed-content-section section-2">
+					<div class="video-container">
+						<video class="intro-video" width="" height="" muted="muted" poster="">
+							<source id="mp4source" src="" data-source="https://closer.harrys.com/assets/video/1A.mp4" type="video/mp4">
+							<img src="https://closer.harrys.com/assets/img/1A.jpg" />
+						</video>
+						<img class="still-image" src="shopify/5.png" />
+					</div>
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper">
+									<h3 class="section-title">Flex Hinge</h3>
+									<h4>Mr. Nice Glide</h4>
+									<p>Our blade cartridge features a rubber flex hinge that has a perfect balance of elasticity and resistance to help glide more comfortably over the contours of your face.</p>
+									<div class="audio-container">
+										<a href="https://soundcloud.com/hapostrophe/flex-hinge-evergreen" class="sc-player">
+											<div class="title">
+												<span class="speaker">Hear More From</span>
+												<span class="department">Brittania, SVP, R&D</span>
+											</div>
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<section class="fixed-content-section section-3">
+					<div class="video-container">
+						<video class="intro-video" width="" height="" muted="muted" poster="">
+							<source id="mp4source" src="" data-source="https://closer.harrys.com/assets/video/2A.mp4" type="video/mp4">
+							<img src="https://closer.harrys.com/assets/img/2A.jpg" />
+						</video>
+						<img class="still-image" src="https://closer.harrys.com/assets/img/2A.jpg" />
+					</div>
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper">
+									<h3 class="section-title">Precision Trimmer</h3>
+									<h4>Finishing Touches</h4>
+									<p>This special blade at the top of the cartridge makes it easy to trim your sideburns and hard-to-reach places like under your nose.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<section class="fixed-content-section section-4">
+					<div class="video-container">
+						<video class="intro-video" width="" height="" muted="muted" poster="">
+							<source id="mp4source" src="" data-source="https://closer.harrys.com/assets/video/3A.mp4" type="video/mp4">
+							<img src="https://closer.harrys.com/assets/img/3A.jpg" />
+						</video>
+						<img class="still-image" src="https://closer.harrys.com/assets/img/3A.jpg" />
+					</div>
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper">
+									<h3 class="section-title">Blades</h3>
+									<h4>Take Five</h4>
+									<p>Our five-blade cartridge evenly distributes pressure over the skin ensuring a quality shave and follows with a lubricating strip for a smooth finish. Each blade is in the Gothic Arch shape which is strong at the base and sharp at the tip ensuring durability.</p>
+									<div class="audio-container">
+										<a href="https://soundcloud.com/hapostrophe/gothic-arch" class="sc-player">
+											<div class="title">
+												<span class="speaker">Hear More From</span>
+												<span class="department">Jeff, CEO & Co-Founder</span>
+											</div>
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<section class="fixed-content-section section-5">
+					<div class="video-container">
+						<video class="intro-video" width="482" height="482" muted="muted" poster="">
+							<source id="mp4source" src="" data-source="11.mp4" type="video/mp4">
+							<img src="11.jpg" />
+						</video>
+						<img class="still-image" src="22.jpg" width="482" height="482"/>
+					</div>
+
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper">
+									<h3 class="section-title">Steel</h3>
+									<h4>Strong steel, made stronger.</h4>
+									<p>We source the highest-quality steel for our blades. To harden from its raw state, we alter the nanostructure of the raw steel by heating it to over 2,000°F, cool it to less than -100°F and reheat it again to 500°F. After this process, we finish it with a rust-preventing coating.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<section class="fixed-content-section section-6">
+					<div class="video-container">
+						<video class="intro-video" width="" height="" muted="muted" poster="">
+							<source id="mp4source" src="" data-source="https://closer.harrys.com/assets/video/5A.mp4" data-source-b="assets/video/5B.mp4" type="video/mp4">
+							<img src="https://closer.harrys.com/assets/img/5A.jpg" />
+						</video>
+					</div>
+					<div class="handle-selection-container">
+						<a class="handle-select-trigger select-winston" data-target="winston">
+							<span class="continue">
+								Continue with Winston
+								<svg class="icon icon-arrow-down"><use xlink:href="#icon-arrow-down"></use></svg>
+							</span>
+						</a>
+						<a class="handle-select-trigger select-truman" data-target="truman">
+							<span class="continue">
+								Continue with Truman
+								<svg class="icon icon-arrow-down"><use xlink:href="#icon-arrow-down"></use></svg>
+							</span>
+						</a>
+						<div class="copy-container">
+							<div class="inner">
+								<div class="inner-inner">
+									<div class="centered-copy-wrapper">
+										<h4>Select a handle.</h4>
+										<p>The Winston and Truman are designed to offer<br /> an elevated level of grip and control.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="copy-container copy-container-16-11">
+							<div class="inner">
+								<div class="inner-inner">
+									<div class="centered-copy-wrapper">
+										<h4 class="heading-1">Now that you’re an expert on blades, scroll down for the story of our handles.</h4>
+										<svg class="icon icon-arrow-down"><use xlink:href="#icon-arrow-down"></use></svg>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<section class="fixed-content-section section-7">
+					<div class="video-container"></div>
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper copy-wrapper-truman">
+									<h3 class="section-title">Ergonomic Shape</h3>
+									<h4>A Better Handle on Things</h4>
+									<p>Inspired by the design of fine pens and knives, the Truman handle is made with a weighted core and an ergonomic shape that is designed to maximize comfort in the hand and optimize control while shaving.</p>
+								</div>
+								<div class="copy-wrapper copy-wrapper-winston">
+									<h3 class="section-title">Ergonomic Shape</h3>
+									<h4>You’re in command.</h4>
+									<p>Our Winston handle is shaped to fit naturally into your hand making it easier to control and more comfortable to hold whether you are making long strokes on your face or using the precision trimmer under your nose.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<section class="fixed-content-section section-8">
+					<div class="video-container"></div>
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper copy-wrapper-truman">
+									<h3 class="section-title">Grip</h3>
+									<h4>Holding Pattern</h4>
+									<p>The rubberized exterior was rigorously tested to assure optimized grip when the handle gets wet. For increased control, it has a strategically placed, textured pattern on the handle.</p>
+									<div class="audio-container">
+										<a href="https://soundcloud.com/hapostrophe/truman-grip" class="sc-player">
+											<div class="title">
+												<span class="speaker">Hear More From</span>
+												<span class="department">Scott, Design Director, R&D</span>
+											</div>
+										</a>
+									</div>
+								</div>
+								<div class="copy-wrapper copy-wrapper-winston">
+									<span class="label">New</span>
+									<h3 class="section-title">Grip</h3>
+									<h4>A whole new “knurled.”</h4>
+									<p>Inspired by classic safety razors, the Winston features a rubberized grip with a diamond pattern called “knurling” that makes it easier to grip and control while shaving.</p>
+									<div class="audio-container">
+										<a href="https://soundcloud.com/hapostrophe/winston-grip" class="sc-player">
+											<div class="title">
+												<span class="speaker">Hear More From</span>
+												<span class="department">Scott, Design Director, R&D</span>
+											</div>
+										</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+				<section class="fixed-content-section section-9">
+					<div class="video-container"></div>
+					<div class="copy-container">
+						<div class="inner">
+							<div class="inner-inner">
+								<div class="copy-wrapper copy-wrapper-truman">
+									<h3 class="section-title">Personalize</h3>
+									<h4>Take your pick.</h4>
+									<p>Select the color that best complements your style and add some more personality to your sink.</p>
+
+									<ul class="color-picker">
+										<li><a class="orange active" data-target="truman-orange"><span></span></a></li>
+										<li><a class="green" data-target="truman-green"><span></span></a></li>
+										<li><a class="blue" data-target="truman-blue"><span></span></a></li>
+									</ul>
+
+									<div class="buttons-container">
+										<a class="shop-blades-button medium-button" href="https://www.harrys.com/products/harrys-blades" >Shop Blades</a>
+										<a class="shop-truman-button medium-button" href="https://www.harrys.com/products/the-truman">Shop Truman</a>
+									</div>
+								</div>
+								<div class="copy-wrapper copy-wrapper-winston">
+									<h3 class="section-title">Personalize</h3>
+									<h4>Initial here.</h4>
+									<p>Shaving is a personal experience. Make it even more personal by engraving your initials on the handle.</p>
+									<div class="buttons-container">
+										<a class="shop-blades-button medium-button" href="https://www.harrys.com/products/harrys-blades" >Shop Blades</a>
+										<a class="shop-winston-button medium-button" href="https://www.harrys.com/products/the-winston">Shop Winston</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+			</div>
+
+
+			<div class="fullpage">
+				<div class="section intro" data-title="intro" data-mobile-title="Home">
+					<div class="mobile-copy-wrapper">
+						<div class="inner">
+							<h2 class="intro-headline">A closer look at<br /> our best shave ever.</h2>
+							<p>Our focus has always been our customers, our quality, and fair prices. We’re proud to continue that tradition with this generation of our blades and handles.</p>
+						</div>
+					</div>
+
+				</div>
+				<div class="section" data-title="flex-hinge" data-mobile-title="Flex Hinge">
+					<div class="mobile-copy-wrapper">
+						<div class="inner">
+							<h4>Mr. Nice Glide</h4>
+							<p>We increased the flexibility of our blade cartridge with a rubber flex hinge that has a perfect balance of elasticity and resistance to glide more comfortably over the contours of your face.</p>
+						</div>
+					</div>
+					<div class="mobile-audio-container">
+						<a href="https://soundcloud.com/hapostrophe/flex-hinge-evergreen" class="sc-player">
+							<div class="title">
+								<span class="speaker">Hear more</span>
+							</div>
+						</a>
+					</div>
+				</div>
+				<div class="section" data-title="precision-trimmer" data-mobile-title="Precision Trimmer">
+					<div class="mobile-copy-wrapper">
+						<div class="inner">
+							<h4>Finishing Touches</h4>
+							<p>This special blade at the top of the cartridge makes it easy to trim your sideburns and hard-to-reach places like under your nose.</p>
+						</div>
+					</div>
+				</div>
+				<div class="section" data-title="blades" data-mobile-title="Five Blades">
+					<div class="mobile-copy-wrapper">
+						<div class="inner">
+							<h4>Smooth Operator</h4>
+							<p>Our five-blade cartridge evenly distributes pressure over the skin ensuring a quality shave and follows with a lubricating strip for a smooth finish.</p>
+						</div>
+					</div>
+
+				</div>
+				<div class="section mobile-only-section" data-title="gothic-arch" data-mobile-title="Sharp Edge">
+					<div class="mobile-copy-wrapper">
+						<div class="inner">
+							<h4>The “Gothic Arch”</h4>
+							<p>We grind our blades at our factory in Germany with a “Gothic Arch” design which is strong at the base and sharp at the tip for a more durable blade that gives a close, comfortable shave.</p>
+						</div>
+					</div>
+					<div class="mobile-audio-container">
+						<a href="https://soundcloud.com/hapostrophe/gothic-arch" class="sc-player">
+							<div class="title">
+								<span class="speaker">Hear more</span>
+							</div>
+						</a>
+					</div>
+				</div>
+				<div class="section" data-title="steel" data-mobile-title="Steel">
+					<div class="mobile-copy-wrapper">
+						<div class="inner">
+							<h4>Strong steel, made stronger.</h4>
+							<p>We source the highest-quality steel for our blades. To harden from its raw state, we alter the nanostructure of the raw steel by heating it to over 2,000°F, cool it to less than -100°F and reheat it again to 500°F. After this process, we finish it with a rust-preventing coating.</p>
+						</div>
+					</div>
+				</div>
+				<div class="section desktop-only-section" data-title="handles" data-mobile-title="Handles">
+				</div>
+				<div class="section" data-title="ergonomic-shape" data-mobile-title="Ergonomic Shape">
+	<!-- 				<div class="truman-content-wrapper">
+						<div class="mobile-copy-wrapper">
+							<div class="inner">
+								<h4>A Better Handle on Things</h4>
+								<p>Inspired by the design of fine pens and knives, the Truman handle is made with a weighted core and an ergonomic shape that is designed to maximize comfort in the hand and optimize control while shaving.</p>
+							</div>
+						</div>
+					</div>
+					<div class="winston-content-wrapper">
+						<div class="mobile-copy-wrapper">
+							<div class="inner">
+								<h4>You’re in command.</h4>
+								<p>Our Winston handle is shaped to fit naturally into your hand making it easier to control and more comfortable to hold whether you are making long strokes on your face or using the precision trimmer under your nose.</p>
+							</div>
+						</div>
+					</div> -->
+				</div>
+				<div class="section grip" data-title="enhanced-grip" data-mobile-title="Grip">
+<!-- 					<div class="truman-content-wrapper">
+						<div class="mobile-copy-wrapper">
+							<div class="inner">
+								<h4>Holding Pattern</h4>
+								<p>The rubberized exterior was rigorously tested to assure optimized grip when the handle gets wet. For increased control, it has a strategically placed, textured pattern on the handle.</p>
+							</div>
+						</div>
+						<div class="mobile-audio-container">
+							<a href="https://soundcloud.com/hapostrophe/truman-grip" class="sc-player">
+								<div class="title">
+									<span class="speaker">Hear more</span>
+								</div>
+							</a>
+						</div>
+					</div>
+					<div class="winston-content-wrapper">
+						<div class="mobile-copy-wrapper">
+							<div class="inner">
+								<h4>A whole new “knurled.”</h4>
+								<p>Inspired by classic safety razors, the Winston features a rubberized grip with a diamond pattern called “knurling” that makes it easier to grip and control while shaving.</p>
+							</div>
+						</div>
+						<div class="mobile-audio-container">
+							<a href="https://soundcloud.com/hapostrophe/winston-grip" class="sc-player">
+								<div class="title">
+									<span class="speaker">Hear more</span>
+								</div>
+							</a>
+						</div>
+					</div> -->
+				</div>
+				<div class="section" data-title="personalize" data-mobile-title="Personalize">
+<!-- 					<div class="truman-content-wrapper">
+						<div class="mobile-copy-wrapper">
+							<div class="inner">
+								<h4>Take your pick.</h4>
+								<p>Select the color that best complements your style and add some more personality to your sink.</p>
+								<ul class="color-picker">
+									<li><a class="orange active" data-target="truman-orange"><span></span></a></li>
+									<li><a class="green" data-target="truman-green"><span></span></a></li>
+									<li><a class="blue" data-target="truman-blue"><span></span></a></li>
+								</ul>
+
+							</div>
+						</div>
+						<div class="buttons-container">
+							<a class="shop-blades-button medium-button" href="https://www.harrys.com/products/harrys-blades" >Shop Blades</a>
+							<a class="shop-truman-button medium-button" href="https://www.harrys.com/products/the-truman">Shop Truman</a>
+						</div>
+					</div>
+					<div class="winston-content-wrapper">
+						<div class="mobile-copy-wrapper">
+							<div class="inner">
+								<h4>Initial here.</h4>
+								<p>Shaving is a personal experience. Make it even more personal by engraving your initials on the handle.</p>
+								<a class="winston-reverse-trigger subheader-large"><svg class="icon icon-arrow-reverse"><use xlink:href="#icon-arrow-reverse"></use></svg> <span>See other side</span></a>
+							</div>
+						</div>
+						<div class="buttons-container">
+							<a class="shop-blades-button medium-button" href="https://www.harrys.com/products/harrys-blades" >Shop Blades</a>
+							<a class="shop-winston-button medium-button" href="https://www.harrys.com/products/the-winston">Shop Winston</a>
+						</div>
+					</div> -->
+				</div>
+
+			</div>
+		</section>
+	</body>
+
+	<script src="https://closer.harrys.com/assets/js/bundle.min.js"></script>
+
+	<script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+	<script>
+		// Initialize Firebase
+		var config = {
+			apiKey: "AIzaSyBI136xRLoeTkCwHKgh3vY-igWD5f7JqQA",
+			authDomain: "project-2631536664807058965.firebaseapp.com",
+			databaseURL: "https://project-2631536664807058965.firebaseio.com",
+			storageBucket: "",
+		};
+		firebase.initializeApp(config);
+	</script>
+
+</html>
