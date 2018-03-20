@@ -26,19 +26,11 @@ add_executable(mini_database
         sql/statements.h
         sql/Table.h
         sql/UpdateStatement.h
-        dbms.cpp
-        dbms.h
-        defines.h
         main.cpp
-        Schema.cpp
-        Schema.h
         sqlhelper.cpp
         sqlhelper.h
         SQLParser.cpp
         SQLParser.h
         SQLParserResult.cpp
         SQLParserResult.h
-        Table.cpp
-        Table.h
-        TableUtil.cpp
-        TableUtil.h)
+        )
