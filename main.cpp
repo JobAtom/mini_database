@@ -11,6 +11,7 @@
 #include <cstring>
 #include <map>
 #include <fstream>
+#include "table.h"
 
 using namespace std;
 
@@ -30,15 +31,13 @@ int main(int argc, char * argv[]){
         query += argv[i];
         query += " ";
     }
-<<<<<<< HEAD
+
     if(query.find("script="))
     {
         //read script and run sql by script
 
     }
 
-=======
->>>>>>> 02e623e04726186cf489e709a5d6ea42412bad62
     while(true) {
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
 
@@ -46,17 +45,10 @@ int main(int argc, char * argv[]){
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
                 //run sql query
-<<<<<<< HEAD
-                cout<< "run sql query" <<endl;
-
-=======
                 loadFromFile();
                 cout<< 'run sql query'<<endl;
-                result->getMutableStatement(i);
-                hsql::SQLStatement* stmt;
-                stmt = result->getMutableStatement(i);
-                executeStatement(stmt);
->>>>>>> 02e623e04726186cf489e709a5d6ea42412bad62
+                executeStatement(result->getMutableStatement(i));
+
             }
         } else {
             cout << "Given string is not a valid SQL query." << endl
