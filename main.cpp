@@ -6,12 +6,21 @@
 #include <string>
 #include "SQLParser.h"
 #include "sqlhelper.h"
+#include <sstream>
+#include <iterator>
+#include <cstring>
+#include <map>
+#include <fstream>
 
 using namespace std;
 
-int main(int argc, char * argv[]){
-    cout<<"begin mini_database project!!!"<<endl;
+void executeStatement(hsql::SQLStatement *stmt);
+void createTable(hsql::CreateStatement *stmt);
+void loadFromFile();
 
+int main(int argc, char * argv[]){
+    loadFromFile();
+    cout<<"begin mini_database project!!!"<<endl;
     if(argc <= 1){
         cout<<"please input query to start SQL!"<<endl;
         exit(1);
@@ -21,12 +30,15 @@ int main(int argc, char * argv[]){
         query += argv[i];
         query += " ";
     }
+<<<<<<< HEAD
     if(query.find("script="))
     {
         //read script and run sql by script
 
     }
 
+=======
+>>>>>>> 02e623e04726186cf489e709a5d6ea42412bad62
     while(true) {
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
 
@@ -34,8 +46,17 @@ int main(int argc, char * argv[]){
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
                 //run sql query
+<<<<<<< HEAD
                 cout<< "run sql query" <<endl;
 
+=======
+                loadFromFile();
+                cout<< 'run sql query'<<endl;
+                result->getMutableStatement(i);
+                hsql::SQLStatement* stmt;
+                stmt = result->getMutableStatement(i);
+                executeStatement(stmt);
+>>>>>>> 02e623e04726186cf489e709a5d6ea42412bad62
             }
         } else {
             cout << "Given string is not a valid SQL query." << endl
@@ -51,8 +72,55 @@ int main(int argc, char * argv[]){
         }
         if (query == "quit;")
             return 0;
-
     }
     return 0;
+}
 
+void executeStatement(hsql::SQLStatement *stmt){
+    switch (stmt->type()) {
+        case hsql::kStmtCreate:
+            cout << "Create" <<endl;
+            createTable((hsql::CreateStatement*)stmt);
+            break;
+        case hsql::kStmtSelect:
+            cout << "Select" <<endl;
+            //executeSelect((hsql::SelectStatement*)stmt);
+            break;
+        case hsql::kStmtInsert:
+            cout << "Insert" <<endl;
+            //executeInsert((hsql::InsertStatement*)stmt);
+            break;
+        case hsql::kStmtShow:
+            cout << "Show" <<endl;
+            //executeShow((hsql::ShowStatement*)stmt);
+            break;
+        case hsql::kStmtDrop:
+            cout << "Drop" <<endl;
+            //executeDrop((hsql::DropStatement*)stmt);
+            break;
+        default:
+            break;
+    }
+}
+
+void createTable(hsql::CreateStatement *stmt){
+    cout << "Creating table " << stmt->tableName << "... "<<endl;
+
+    //Table* table = getTable(stmt->tableName);
+    //cout << table <<endl;
+    // manipulate the table
+}
+
+void loadFromFile(){
+
+    ifstream is("CATALOG.txt");
+    string line;
+    cout << "catalog" <<endl;
+    while(getline(is, line)){
+        // tablename
+        string name = line.substr(10);
+        cout << name <<endl;
+    }
+
+    is.close();
 }
