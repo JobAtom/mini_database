@@ -21,6 +21,11 @@ int main(int argc, char * argv[]){
         query += argv[i];
         query += " ";
     }
+    if(query.find("script="))
+    {
+        //read script and run sql by script
+
+    }
 
     while(true) {
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
@@ -29,8 +34,8 @@ int main(int argc, char * argv[]){
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
                 //run sql query
-                cout<< 'run sql query'<<endl;
-                
+                cout<< "run sql query" <<endl;
+
             }
         } else {
             cout << "Given string is not a valid SQL query." << endl
