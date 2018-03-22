@@ -17,11 +17,10 @@ using namespace std;
 
 void executeStatement(hsql::SQLStatement *stmt);
 void createTable(hsql::CreateStatement *stmt);
-void loadFromFile();
+void loadFromFile(map<string, table*> map_list);
+void saveToFile(map<string, table*> map_list);
 
 int main(int argc, char * argv[]){
-    loadFromFile();
-    cout<<"begin mini_database project!!!"<<endl;
     if(argc <= 1){
         cout<<"please input query to start SQL!"<<endl;
         exit(1);
@@ -45,9 +44,10 @@ int main(int argc, char * argv[]){
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
                 //run sql query
-                loadFromFile();
-                cout<< 'run sql query'<<endl;
+                map<string, table*> table_list;
+                loadFromFile(table_list);
                 executeStatement(result->getMutableStatement(i));
+                saveToFile(table_list);
 
             }
         } else {
@@ -95,24 +95,36 @@ void executeStatement(hsql::SQLStatement *stmt){
     }
 }
 
+
 void createTable(hsql::CreateStatement *stmt){
     cout << "Creating table " << stmt->tableName << "... "<<endl;
 
-    //Table* table = getTable(stmt->tableName);
-    //cout << table <<endl;
-    // manipulate the table
+    table* newtable = new table(stmt->tableName);
+
+
 }
 
-void loadFromFile(){
+
+void loadFromFile(map<string, table*> map_list){
 
     ifstream is("CATALOG.txt");
     string line;
-    cout << "catalog" <<endl;
     while(getline(is, line)){
         // tablename
         string name = line.substr(10);
+        table* temp_table = new table(name);
+
         cout << name <<endl;
+        map_list.insert(make_pair(name, temp_table));
     }
 
     is.close();
+
+}
+void saveToFile(map<string, table*> map_list){
+    if(map_list.size() == 0){
+        return;
+    }
+    ofstream os("CATALOG.txt");
+    os.close();
 }

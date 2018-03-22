@@ -33,4 +33,6 @@ add_executable(mini_database
         SQLParser.h
         SQLParserResult.cpp
         SQLParserResult.h
+        table.cpp
+        table.h
         )
