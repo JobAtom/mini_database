@@ -1,7 +1,8 @@
-#ifndef TABLE_H
-#define TABLE_H
+#ifndef MINI_DATABASE_TABLE_H
+#define MINI_DATABASE_TABLE_H
 #include <vector>
 #include <string>
+#include "column.h"
 
 using namespace std;
 
@@ -14,10 +15,11 @@ public:
 
 
 
+
 private:
     string filename;
 
 
 };
 
-#endif
+#endif //MINI_DATABASE_TABLE_H
