@@ -4,11 +4,23 @@
 
 #ifndef MINI_DATABASE_COLUMN_H
 #define MINI_DATABASE_COLUMN_H
+#include <string>
+
+using namespace std;
 
 class column{
 public:
     column();
+    column(const string &name, const string &flag, int size);
     ~column();
+
+    int col_offset = 0;
+    int element_size;
+    int element_truesize;
+
+    string name;
+    string flag;
+
 
 };
 

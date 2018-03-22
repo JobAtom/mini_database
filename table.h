@@ -12,12 +12,20 @@ public:
     table();
     table(const string& name);
     virtual ~table();
+    void addColumn(vector<column*> &cols);
+    column* getColumn(string name);
+
+    string filename;
+    vector<column*> table_cols;
 
 
 
 
 private:
-    string filename;
+
+    int rowlength;
+
+
 
 
 };

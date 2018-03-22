@@ -15,10 +15,10 @@
 
 using namespace std;
 
-void executeStatement(hsql::SQLStatement *stmt);
-void createTable(hsql::CreateStatement *stmt);
-void loadFromFile(map<string, table*> map_list);
-void saveToFile(map<string, table*> map_list);
+void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
+void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
+void loadFromFile(map<string, table*> &map_list);
+void saveToFile(map<string, table*> &map_list);
 
 int main(int argc, char * argv[]){
     if(argc <= 1){
@@ -36,7 +36,8 @@ int main(int argc, char * argv[]){
         //read script and run sql by script
 
     }
-
+    map<string, table*> table_list;
+    //loadFromFile(table_list);
     while(true) {
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
 
@@ -44,9 +45,7 @@ int main(int argc, char * argv[]){
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
                 //run sql query
-                map<string, table*> table_list;
-                loadFromFile(table_list);
-                executeStatement(result->getMutableStatement(i));
+                executeStatement(result->getMutableStatement(i), table_list);
                 saveToFile(table_list);
 
             }
@@ -62,17 +61,19 @@ int main(int argc, char * argv[]){
             getline(cin, line);
             query += line;
         }
-        if (query == "quit;")
-            return 0;
+        if (query == "quit;") {
+            saveToFile(table_list);
+            exit(0);
+        }
     }
     return 0;
 }
 
-void executeStatement(hsql::SQLStatement *stmt){
+void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list){
     switch (stmt->type()) {
         case hsql::kStmtCreate:
             cout << "Create" <<endl;
-            createTable((hsql::CreateStatement*)stmt);
+            createTable((hsql::CreateStatement*)stmt, table_list);
             break;
         case hsql::kStmtSelect:
             cout << "Select" <<endl;
@@ -80,7 +81,7 @@ void executeStatement(hsql::SQLStatement *stmt){
             break;
         case hsql::kStmtInsert:
             cout << "Insert" <<endl;
-            //executeInsert((hsql::InsertStatement*)stmt);
+            //executeInsert((hsql::InsertStatement*)stmt, table_list);
             break;
         case hsql::kStmtShow:
             cout << "Show" <<endl;
@@ -88,7 +89,7 @@ void executeStatement(hsql::SQLStatement *stmt){
             break;
         case hsql::kStmtDrop:
             cout << "Drop" <<endl;
-            //executeDrop((hsql::DropStatement*)stmt);
+            //executeDrop((hsql::DropStatement*)stmt, table_list);
             break;
         default:
             break;
@@ -96,16 +97,36 @@ void executeStatement(hsql::SQLStatement *stmt){
 }
 
 
-void createTable(hsql::CreateStatement *stmt){
+void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
     cout << "Creating table " << stmt->tableName << "... "<<endl;
 
     table* newtable = new table(stmt->tableName);
+    vector<column* > cols;
+    //put cols to table
+    for(hsql::ColumnDefinition* col_def : *stmt->columns){
+        string flag = "";
+        int size;
+        if (col_def-> type == hsql::ColumnDefinition::DataType::INT){
+            flag = "INT";
+            size = 8;
+        }
+        else if (col_def->type == hsql::ColumnDefinition::DataType::TEXT){
+            flag = "CHAR";
+            size = col_def->size;
+        }
+        column* newcol = new column(col_def->name, flag, size);
+        cols.push_back(newcol);
+    }
+    newtable->addColumn(cols);
+    ofstream os(newtable->filename, ios::out | ios::binary);
+
+    table_list.insert(make_pair(stmt->tableName, newtable));
 
 
 }
 
-
-void loadFromFile(map<string, table*> map_list){
+//need more founctions
+void loadFromFile(map<string, table*> &map_list){
 
     ifstream is("CATALOG.txt");
     string line;
@@ -114,17 +135,34 @@ void loadFromFile(map<string, table*> map_list){
         string name = line.substr(10);
         table* temp_table = new table(name);
 
-        cout << name <<endl;
+        //cout << name <<endl;
         map_list.insert(make_pair(name, temp_table));
     }
 
     is.close();
 
 }
-void saveToFile(map<string, table*> map_list){
+void saveToFile(map<string, table*> &map_list){
     if(map_list.size() == 0){
         return;
     }
     ofstream os("CATALOG.txt");
+    for(auto tl: map_list){
+        os << "tablename=";
+        os << tl.first <<endl;
+        os << "columns=";
+        string  temp_str = "";
+        for(auto col : tl.second->table_cols){
+            temp_str += col->name + ": " + col->flag + ", ";
+            //os << col->name << ": " << col->flag << ", "
+        }
+        os << temp_str.substr(0, temp_str.size() - 2 ) << endl;
+        os << "primaryKey=NULL" << endl;
+        os << "recordsize=" << endl;
+        os << "totalrecordsize=" << endl;
+        os << "records="<< endl;
+        os << "\n" << endl;
+
+    }
     os.close();
 }
