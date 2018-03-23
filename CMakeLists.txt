@@ -37,4 +37,4 @@ add_executable(mini_database
         table.h
         column.h
         column.cpp
-        )
+        util.cpp util.h)

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include "column.h"
+#include "sql/statements.h"
 
 using namespace std;
 
@@ -13,17 +14,23 @@ public:
     table(const string& name);
     virtual ~table();
     void addColumn(vector<column*> &cols);
-    column* getColumn(string name);
+    column* getColumn(const string &name);
+    void setPrimaryKey(const string &name);
+    bool insert(hsql::InsertStatement *stmt);
 
-    string filename;
     vector<column*> table_cols;
 
-
+    column* getPrimaryKey(){return primaryKey;};
+    string getName(){
+        return filename;
+    };
+    int getRowlength(){return rowlength;}
 
 
 private:
-
-    int rowlength;
+    column* primaryKey = NULL;
+    string filename;
+    int rowlength = 0;
 
 
 

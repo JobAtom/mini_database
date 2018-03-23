@@ -12,11 +12,13 @@
 #include <map>
 #include <fstream>
 #include "table.h"
+#include "util.h"
 
 using namespace std;
 
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
+void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
 void loadFromFile(map<string, table*> &map_list);
 void saveToFile(map<string, table*> &map_list);
 
@@ -30,6 +32,7 @@ int main(int argc, char * argv[]){
         query += argv[i];
         query += " ";
     }
+    query += ";";
 
     if(query.find("script="))
     {
@@ -40,7 +43,6 @@ int main(int argc, char * argv[]){
     //loadFromFile(table_list);
     while(true) {
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
-
         // check whether the parsing was successful
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
@@ -53,7 +55,6 @@ int main(int argc, char * argv[]){
             cout << "Given string is not a valid SQL query." << endl
                  << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
         }
-        delete result;
         query.clear();
         cout << "SQL>";
         while(query.find(";") == string::npos){
@@ -81,7 +82,7 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
         case hsql::kStmtInsert:
             cout << "Insert" <<endl;
-            //executeInsert((hsql::InsertStatement*)stmt, table_list);
+            insertTable((hsql::InsertStatement*)stmt, table_list);
             break;
         case hsql::kStmtShow:
             cout << "Show" <<endl;
@@ -104,8 +105,8 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
     vector<column* > cols;
     //put cols to table
     for(hsql::ColumnDefinition* col_def : *stmt->columns){
-        string flag = "";
-        int size;
+        string flag ;
+        int size = 0;
         if (col_def-> type == hsql::ColumnDefinition::DataType::INT){
             flag = "INT";
             size = 8;
@@ -118,9 +119,28 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
         cols.push_back(newcol);
     }
     newtable->addColumn(cols);
-    ofstream os(newtable->filename, ios::out | ios::binary);
+    ofstream os(newtable->getName(), ios::out | ios::binary);
 
     table_list.insert(make_pair(stmt->tableName, newtable));
+    //set primary key
+    if(stmt->primaryKey != NULL){
+        newtable->setPrimaryKey(stmt->primaryKey->name);
+    }
+    os.close();
+
+}
+void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
+    cout<<"Insert into table"<<endl;
+    table* totable = util::getTable(stmt->tableName, table_list);
+    if(totable == NULL){
+        cout<<"table "<<stmt->tableName<<" not exits"<<endl;
+        return;
+    }
+    if (stmt->type == hsql::InsertStatement::kInsertValues){
+        if(totable->insert(stmt)){
+            cout << "insert successful" << endl;
+        }
+    }
 
 
 }
@@ -154,15 +174,18 @@ void saveToFile(map<string, table*> &map_list){
         string  temp_str = "";
         for(auto col : tl.second->table_cols){
             temp_str += col->name + ": " + col->flag + ", ";
-            //os << col->name << ": " << col->flag << ", "
         }
         os << temp_str.substr(0, temp_str.size() - 2 ) << endl;
-        os << "primaryKey=NULL" << endl;
+        if(tl.second->getPrimaryKey()!= NULL)
+            os << "primaryKey=" << tl.second->getPrimaryKey()->name << endl;
+        else
+            os << "primaryKey=NULL" << endl;
         os << "recordsize=" << endl;
         os << "totalrecordsize=" << endl;
         os << "records="<< endl;
         os << "\n" << endl;
 
     }
+
     os.close();
 }
