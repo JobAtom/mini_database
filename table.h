@@ -17,23 +17,29 @@ public:
     column* getColumn(const string &name);
     void setPrimaryKey(const string &name);
     bool insert(hsql::InsertStatement *stmt);
-
+    int getRecordSize(){return recordSize;};
+    int getTotalRecordSize() { return totalRecordSize;};
     vector<column*> table_cols;
 
     column* getPrimaryKey(){return primaryKey;};
     string getName(){
         return filename;
     };
-    int getRowlength(){return rowlength;}
+    int getRowlength(){return rowlength;};
+
+    void setRowLength(int length) {rowlength = length; };
+
 
 
 private:
+    int recordSize = 0;
+
     column* primaryKey = NULL;
     string filename;
+
     int rowlength = 0;
-
-
-
+    int totalRecordSize = 0;
+    int element_true_size = 0;
 
 };
 

@@ -21,6 +21,10 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
 void loadFromFile(map<string, table*> &map_list);
 void saveToFile(map<string, table*> &map_list);
+void printTableList(map<string, table*> table_list);
+void loadTableList(map<string, table*> & table_list);
+inline std::vector<std::string> split(const std::string &s, char delim);
+
 
 int main(int argc, char * argv[]){
     if(argc <= 1){
@@ -40,8 +44,13 @@ int main(int argc, char * argv[]){
 
     }
     map<string, table*> table_list;
-    //loadFromFile(table_list);
+
+    loadTableList(table_list);
+
     while(true) {
+
+       // printTableList(table_list);
+
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
         // check whether the parsing was successful
         if (result->isValid()) {
@@ -57,6 +66,8 @@ int main(int argc, char * argv[]){
         }
         query.clear();
         cout << "SQL>";
+
+
         while(query.find(";") == string::npos){
             string line;
             getline(cin, line);
@@ -98,6 +109,19 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
 }
 
 
+void printTableList(map<string, table*> table_list){
+
+    if(table_list.empty()) cout << "nothing" << endl;
+    else cout << table_list.begin()->first <<endl;
+
+    for(map<string, table*>::const_iterator it = table_list.begin();
+        it != table_list.end(); ++it)
+    {
+        std::cout << it->first << " " << it->second->getRowlength() << " " << it->second->getPrimaryKey() << "\n";
+    }
+}
+
+
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
     cout << "Creating table " << stmt->tableName << "... "<<endl;
 
@@ -119,9 +143,11 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
         cols.push_back(newcol);
     }
     newtable->addColumn(cols);
+
     ofstream os(newtable->getName(), ios::out | ios::binary);
 
     table_list.insert(make_pair(stmt->tableName, newtable));
+
     //set primary key
     if(stmt->primaryKey != NULL){
         newtable->setPrimaryKey(stmt->primaryKey->name);
@@ -130,12 +156,17 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
 
 }
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
-    cout<<"Insert into table"<<endl;
+    cout<<"Insert into table : "<< stmt->tableName << endl;
+
     table* totable = util::getTable(stmt->tableName, table_list);
     if(totable == NULL){
         cout<<"table "<<stmt->tableName<<" not exits"<<endl;
         return;
     }
+
+    //cout << hsql::InsertStatement::kInsertValues << endl;
+
+    cout << stmt->type << endl;
     if (stmt->type == hsql::InsertStatement::kInsertValues){
         if(totable->insert(stmt)){
             cout << "insert successful" << endl;
@@ -146,22 +177,7 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
 }
 
 //need more founctions
-void loadFromFile(map<string, table*> &map_list){
 
-    ifstream is("CATALOG.txt");
-    string line;
-    while(getline(is, line)){
-        // tablename
-        string name = line.substr(10);
-        table* temp_table = new table(name);
-
-        //cout << name <<endl;
-        map_list.insert(make_pair(name, temp_table));
-    }
-
-    is.close();
-
-}
 void saveToFile(map<string, table*> &map_list){
     if(map_list.size() == 0){
         return;
@@ -173,19 +189,68 @@ void saveToFile(map<string, table*> &map_list){
         os << "columns=";
         string  temp_str = "";
         for(auto col : tl.second->table_cols){
-            temp_str += col->name + ": " + col->flag + ", ";
+            if(col->flag == "INT") temp_str += col->name + ":" + col->flag + ",";
+            else temp_str += col->name + ":" + col->flag + "("+ to_string( col->element_size) + "),";
         }
-        os << temp_str.substr(0, temp_str.size() - 2 ) << endl;
+        os << temp_str.substr(0, temp_str.size() - 1 ) << endl;
+
         if(tl.second->getPrimaryKey()!= NULL)
             os << "primaryKey=" << tl.second->getPrimaryKey()->name << endl;
         else
             os << "primaryKey=NULL" << endl;
-        os << "recordsize=" << endl;
-        os << "totalrecordsize=" << endl;
-        os << "records="<< endl;
-        os << "\n" << endl;
 
+        os << "recordsize="<<tl.second->getRecordSize() << endl;
+        os << "totalrecordsize="<<tl.second->getTotalRecordSize() << endl;
+        os << "records="<< tl.second->getRowlength()<< endl;
+    }
+    os.close();
+}
+
+void loadTableList(map<string, table*> &table_list){
+    ifstream is("CATALOG.txt");
+    string line;
+    while(getline(is, line)){
+        string tableName = line.substr(10);
+        table* t = new table(tableName );
+       // cout << line.substr(10) << endl;
+        getline(is, line);
+
+        vector<column*> columns;
+        string strCol = line.substr(8);
+        vector<string> tokens = split(strCol, ',');
+        for(auto col_str:tokens) {
+            column *col = new column();
+            col->fromString(col_str);
+
+            columns.push_back(col);
+        }
+        t->addColumn(columns);
+
+        // primary key
+        getline(is, line);
+
+        getline(is, line);
+        // total size
+        getline(is, line);
+
+        // records
+        getline(is, line);
+        //t->setRowLength(stoi(line.substr(8)));
+
+        table_list.insert(make_pair(tableName, t));
     }
 
-    os.close();
+    is.close();
+}
+
+inline std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+
+    return elems;
 }

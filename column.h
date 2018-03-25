@@ -12,6 +12,7 @@ class column{
 public:
     column();
     column(const string &name, const string &flag, int size);
+    void fromString(const string &str);
     ~column();
 
     int col_offset = 0;

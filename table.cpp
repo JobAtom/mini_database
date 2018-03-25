@@ -27,6 +27,7 @@ void table::addColumn(vector<column*> &cols){
         element_true_size += col->element_truesize;
         element_size += col->element_size;
     }
+    recordSize = element_size;
 }
 
 void table::setPrimaryKey(const string &name) {
@@ -70,18 +71,29 @@ bool table::insert(hsql::InsertStatement *stmt) {
         //insert value to selected columns
         }
         else{
-            if((*stmt->values)[i]->type == hsql::kExprLiteralString){
-                os << (*stmt->values)[i]->name;
+            if(table_cols[i]->flag == "CHAR"){
+
+                if((*stmt->values)[i]->type == hsql::kExprLiteralString){
+                    const char* str = (*stmt->values)[i]->name;
+                    os.write(str, strlen(str) + 1) ;
+                }
+                else{
+                    const char* str = to_string( (*stmt->values)[i]->ival ).c_str();
+                    os.write(str,  strlen(str) + 1) ;
+                }
             }
             else{
-                os << (*stmt->values)[i]->ival;
+                cout << (*stmt->values)[i]->ival << endl;
+                os.write(  (char*)&(*stmt->values)[i]->ival, 8) ;
             }
             rowlength++;
         }
-
     }
     os.close();
     return true;
 
 }
+
+
+
 
