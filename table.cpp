@@ -4,6 +4,7 @@
 #include <vector>
 #include "table.h"
 #include "util.h"
+#include <iomanip>
 #define TABLE_PATH "./"
 using namespace std;
 
@@ -73,27 +74,118 @@ bool table::insert(hsql::InsertStatement *stmt) {
         else{
             if(table_cols[i]->flag == "CHAR"){
 
+                // check char size
+
+
                 if((*stmt->values)[i]->type == hsql::kExprLiteralString){
-                    const char* str = (*stmt->values)[i]->name;
-                    os.write(str, strlen(str) + 1) ;
+                    const char* str = (*stmt->values)[i]->name ;
+                    if( strlen(str) > table_cols[i]->element_truesize ){
+                        cout << "Wrong Char size" << endl;
+                         return false;
+                    }
+                    os.write(str,  table_cols[i]->element_truesize ) ;
+
                 }
                 else{
                     const char* str = to_string( (*stmt->values)[i]->ival ).c_str();
-                    os.write(str,  strlen(str) + 1) ;
+
+                    if( strlen(str) > table_cols[i]->element_truesize ){
+                        cout << "Wrong Char size" << endl;
+                        return false;
+                    }
+                    os.write(str,  table_cols[i]->element_truesize ) ;
                 }
             }
             else{
-                cout << (*stmt->values)[i]->ival << endl;
+                //cout << (*stmt->values)[i]->ival << "Data: " << endl;
+
                 os.write(  (char*)&(*stmt->values)[i]->ival, 8) ;
+
+//                char* bytes = new char[16];
+//
+//                ifstream ifos(filename, ios::in|ios::binary);
+//                ifos.read(bytes, 16);
+//
+//                if(table_cols[i]->flag == "INT")
+//                    cout <<left<<setw(8)<<setfill(' ')<<*(int*)bytes;
+//                else{
+//                    cout<<left<<setw(table_cols[i]->element_size+2 > 8 ? table_cols[i]->element_size+2 : 8)<<setfill(' ')<<bytes;
+//                }
+//                delete bytes;
+
             }
-            rowlength++;
+
         }
     }
+    rowlength++;
     os.close();
     return true;
 
 }
 
+
+bool table::select(hsql::SelectStatement *stmt){
+
+    ifstream os(filename, ios::in|ios::binary);
+
+    if(!os.is_open()){
+        cout <<"Can't open table "<< stmt->fromTable->name  <<endl;
+        return false;
+    }
+    vector<pair<string, column*>> cols;
+
+    if(stmt->selectList->size() == 1 && (*stmt->selectList)[0]->type == hsql::kExprStar) {    // select *
+        for (auto col : table_cols)
+            cols.push_back(make_pair(col->name, col));
+    }
+
+
+    // header
+    for(auto it : cols){
+        column* col = it.second;
+        if(col == NULL || col->flag == "INT")
+           cout <<left<<setw(8)<<setfill(' ')<<it.first;
+        else if(col->flag == "CHAR")
+            cout <<left<<setw(col->element_size +2 > 8 ? col->element_size+2 : 8)<<setfill(' ')<<it.first;
+    }
+    //
+    //cout << rowlength << endl;
+    for(int i = 0; i < rowlength; i++){
+
+
+        for(auto it:cols) {
+            column *col = it.second;
+
+            if (col != NULL) {
+                cout << "rowSize : " << rowSize << endl;
+
+
+                os.seekg(i * rowSize + col->col_offset); //i*element_true_size + col->col_offset
+                cout << "position : " << i * rowSize + col->col_offset<< endl;
+                //TableUtil::printColValue(os, col);
+
+                char *bytes = new char[col->element_truesize];
+                cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
+                os.read(bytes, col->element_truesize);
+
+
+                if ( col->flag == "INT")
+                    cout << left << setw(8) << setfill(' ') << *(int *) bytes;
+                else {
+                    cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
+                         << setfill(' ') << bytes;
+                }
+                delete bytes;
+
+            } else {
+                cout << left << setw(8) << setfill(' ') << it.first;
+            }
+            cout << endl;
+        }
+    }
+    os.close();
+
+}
 
 
 

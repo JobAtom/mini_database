@@ -19,6 +19,8 @@ using namespace std;
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
+void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
+
 void loadFromFile(map<string, table*> &map_list);
 void saveToFile(map<string, table*> &map_list);
 void printTableList(map<string, table*> table_list);
@@ -89,7 +91,7 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
         case hsql::kStmtSelect:
             cout << "Select" <<endl;
-            //executeSelect((hsql::SelectStatement*)stmt);
+            executeSelect((hsql::SelectStatement*)stmt, table_list);
             break;
         case hsql::kStmtInsert:
             cout << "Insert" <<endl;
@@ -99,10 +101,10 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             cout << "Show" <<endl;
             //executeShow((hsql::ShowStatement*)stmt);
             break;
-        case hsql::kStmtDrop:
-            cout << "Drop" <<endl;
-            //executeDrop((hsql::DropStatement*)stmt, table_list);
-            break;
+//        case hsql::kStmtDrop:
+//            cout << "Drop" <<endl;
+//            //executeDrop((hsql::DropStatement*)stmt, table_list);
+//            break;
         default:
             break;
     }
@@ -128,22 +130,26 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
     table* newtable = new table(stmt->tableName);
     vector<column* > cols;
     //put cols to table
+    int row_length = 0;
     for(hsql::ColumnDefinition* col_def : *stmt->columns){
         string flag ;
         int size = 0;
         if (col_def-> type == hsql::ColumnDefinition::DataType::INT){
             flag = "INT";
             size = 8;
+            row_length += 8;
         }
         else if (col_def->type == hsql::ColumnDefinition::DataType::TEXT){
             flag = "CHAR";
             size = col_def->size;
+            row_length += size;
+            row_length += 1;
         }
         column* newcol = new column(col_def->name, flag, size);
         cols.push_back(newcol);
     }
     newtable->addColumn(cols);
-
+    newtable->setRowSize(row_length);
     ofstream os(newtable->getName(), ios::out | ios::binary);
 
     table_list.insert(make_pair(stmt->tableName, newtable));
@@ -172,6 +178,23 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
             cout << "insert successful" << endl;
         }
     }
+
+
+}
+
+void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list){
+
+    table* totable = util::getTable(stmt->fromTable->name, table_list);
+    cout << "table: "<< totable->getName() << endl;
+
+    if(totable != nullptr) {
+        totable->select(stmt);
+
+    }else{
+        cout << "table not exist"<< endl;
+    }
+
+
 
 
 }
@@ -218,10 +241,11 @@ void loadTableList(map<string, table*> &table_list){
         vector<column*> columns;
         string strCol = line.substr(8);
         vector<string> tokens = split(strCol, ',');
+        int rowSize = 0;
         for(auto col_str:tokens) {
             column *col = new column();
             col->fromString(col_str);
-
+            rowSize += col->element_truesize;
             columns.push_back(col);
         }
         t->addColumn(columns);
@@ -235,7 +259,9 @@ void loadTableList(map<string, table*> &table_list){
 
         // records
         getline(is, line);
-        //t->setRowLength(stoi(line.substr(8)));
+        t->setRowLength(stoi(line.substr(8)));
+
+        t->setRowSize(rowSize);
 
         table_list.insert(make_pair(tableName, t));
     }

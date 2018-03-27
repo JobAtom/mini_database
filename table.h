@@ -17,6 +17,9 @@ public:
     column* getColumn(const string &name);
     void setPrimaryKey(const string &name);
     bool insert(hsql::InsertStatement *stmt);
+
+    bool select(hsql::SelectStatement *stmt);
+
     int getRecordSize(){return recordSize;};
     int getTotalRecordSize() { return totalRecordSize;};
     vector<column*> table_cols;
@@ -29,7 +32,7 @@ public:
 
     void setRowLength(int length) {rowlength = length; };
 
-
+    void setRowSize(int length) {rowSize = length; };
 
 private:
     int recordSize = 0;
@@ -39,7 +42,7 @@ private:
 
     int rowlength = 0;
     int totalRecordSize = 0;
-    int element_true_size = 0;
+    int rowSize = 0;
 
 };
 

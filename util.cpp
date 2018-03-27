@@ -12,7 +12,7 @@ util::util(){
 table* util::getTable(const string &name, map<string, table*> table_list){
 
     for(auto tl : table_list){
-        cout << tl.first << endl;
+        //cout << tl.first << endl;
         string tl_name = tl.first;
         if(compareString(name, tl_name))
             return tl.second;
