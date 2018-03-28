@@ -170,9 +170,6 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
         return;
     }
 
-    //cout << hsql::InsertStatement::kInsertValues << endl;
-
-    cout << stmt->type << endl;
     if (stmt->type == hsql::InsertStatement::kInsertValues){
         if(totable->insert(stmt)){
             cout << "insert successful" << endl;
@@ -185,7 +182,10 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
 void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list){
 
     table* totable = util::getTable(stmt->fromTable->name, table_list);
-    cout << "table: "<< totable->getName() << endl;
+    if(totable == NULL){
+        cout<< "did not find table " << stmt->fromTable->name << " from database"<<endl;
+        return;
+    }
 
     if(totable != nullptr) {
         totable->select(stmt);
