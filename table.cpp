@@ -291,6 +291,19 @@ bool table::select(hsql::SelectStatement *stmt){
                     }
                 }
                 //check >
+                else if(stmt->whereClause->opChar == '>'){
+                    if(util::compareChar(bytes, compareChar) != 1){
+                        delete bytes;
+                        continue;
+                    }
+                }
+                //check <
+                else if(stmt->whereClause->opChar == '<'){
+                    if(util::compareChar(bytes, compareChar) != -1){
+                        delete bytes;
+                        continue;
+                    }
+                }
 
             }
 

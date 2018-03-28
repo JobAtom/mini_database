@@ -20,6 +20,7 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
 void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
+void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt);
 
 void loadFromFile(map<string, table*> &map_list);
 void saveToFile(map<string, table*> &map_list);
@@ -180,23 +181,78 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
 }
 
 void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list){
+    if(stmt->fromTable->type == hsql::kTableName){
+        table* totable = util::getTable(stmt->fromTable->name, table_list);
+        if(totable == NULL){
+            cout<< "did not find table " << stmt->fromTable->name << " from database"<<endl;
+            return;
+        }
 
-    table* totable = util::getTable(stmt->fromTable->name, table_list);
-    if(totable == NULL){
-        cout<< "did not find table " << stmt->fromTable->name << " from database"<<endl;
+        if(totable != nullptr) {
+            totable->select(stmt);
+        }
+    }
+    else{//do join
+        cout<< "join" <<endl;
+        char* leftname = stmt->fromTable->join->left->getName();
+        char* rightname =  stmt->fromTable->join->right->getName();
+        table* lefttable = util::getTable(leftname, table_list);
+        table* righttable = util::getTable(rightname, table_list);
+        if(lefttable==nullptr)
+            cout << "table "<< leftname << " do not exist" << endl;
+        if (righttable == nullptr)
+            cout << "table "<< rightname << " do not exist" << endl;
+        if(lefttable != nullptr && righttable != nullptr){
+            //join
+            joinTable(lefttable, righttable, stmt);
+        }
+
+    }
+
+}
+void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt){
+    ifstream os_left(t1->getName(), ios::in|ios::binary);
+    ifstream os_right(t2->getName(), ios::in|ios::binary);
+
+    if(!os_left.is_open()){
+        cout <<"Can't open table "<< t1->getName() <<endl;
         return;
     }
-
-    if(totable != nullptr) {
-        totable->select(stmt);
-
-    }else{
-        cout << "table not exist"<< endl;
+    if(!os_right.is_open()){
+        cout <<"Can't open table "<< t2->getName() <<endl;
     }
+    vector<pair<string, column*>> cols_left;
+    vector<pair<string, column*>> cols_right;
 
+    if(stmt->selectList->size() == 1 && (*stmt->selectList)[0]->type == hsql::kExprStar) {    // select *
+        for (auto col : t1->table_cols)
+            cols_left.push_back(make_pair(col->name, col));
+        for (auto col: t2->table_cols)
+            cols_right.push_back(make_pair(col->name, col));
+    }
+    else{
+        for(hsql::Expr* expr : *stmt->selectList){
 
+            if(expr->type == hsql::kExprLiteralString || expr->type == hsql::kExprColumnRef){   // select C1,C2,...
+                string colName = expr->name;
+                column *col_left = t1->getColumn(colName);
+                column *col_right = t2->getColumn(colName);
+                if(col_left == NULL){
+                    cout <<"Column '"<<colName<<"' does not exist in table : " << t1->getName() <<endl;
+                    return;
+                }else{
+                    cols_left.push_back(make_pair(col_left->name, col_left));
+                }
+                if(col_right == NULL){
+                    cout <<"Column "<<colName<<"' does not exist in table : " << t2->getName() <<endl;
+                }
+            }else if(expr->type == hsql::kExprLiteralInt){
+                cols_left.push_back(make_pair(to_string(expr->ival), (column*)NULL));
+                cols_right.push_back(make_pair(to_string(expr->ival), (column*)NULL));
 
-
+            }
+        }
+    }
 }
 
 //need more founctions

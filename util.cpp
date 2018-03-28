@@ -43,3 +43,17 @@ bool util::compareString(const char* str1, const char* str2){
             return false;
     return true;
 }
+int util::compareChar(const char* str1, const char* str2){
+
+    for(int i = 0 ; i < min(strlen(str1), strlen(str2)); i++){
+        if(str1[i] < str2[i])
+            return -1;
+        else if (str1[i] > str2[i])
+            return 1;
+    }
+    if(strlen(str2) > strlen(str1))
+        return -1;
+    else if(strlen(str2) == strlen(str1))
+        return 0;
+    return 1;
+}

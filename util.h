@@ -18,6 +18,8 @@ public:
     static bool compareString(const std::string& str1, const std::string& str2);
     static bool compareString(const std::string& str1, const char* str2);
     static bool compareString(const char* str1, const char* str2);
+    static int compareChar(const char* str1, const char* str2);
+
 };
 
 #endif //MINI_DATABASE_UTIL_H
