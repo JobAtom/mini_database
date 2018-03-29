@@ -18,12 +18,12 @@ public:
     void setPrimaryKey(const string &name);
     bool insert(hsql::InsertStatement *stmt);
 
-    bool select(hsql::SelectStatement *stmt);
+    vector<pair<string, column*>> select(hsql::SelectStatement *stmt);
 
     int getRecordSize(){return recordSize;};
     int getTotalRecordSize() { return totalRecordSize;};
     vector<column*> table_cols;
-
+    int getrowSize() {return rowSize;};
     column* getPrimaryKey(){return primaryKey;};
     string getName(){
         return filename;
