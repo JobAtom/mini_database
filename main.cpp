@@ -230,79 +230,16 @@ void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list)
 
 }
 void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt){
-    ifstream os_left(t1->getName(), ios::in|ios::binary);
-    ifstream os_right(t2->getName(), ios::in|ios::binary);
 
-    if(!os_left.is_open()){
-        cout <<"Can't open table "<< t1->getName() <<endl;
-        return;
-    }
-    if(!os_right.is_open()){
-        cout <<"Can't open table "<< t2->getName() <<endl;
-    }
     vector<pair<string, column*>> cols_left;
     vector<pair<string, column*>> cols_right;
 
     cols_left = t1->select(stmt);
     cols_right = t2->select(stmt);
-    //compair condition for string
-//    if(stmt->fromTable->join->condition->expr->type != stmt->fromTable->join->condition->expr2->type){
-//        cout << "Can't do join between different types" << endl;
-//        return;
-//    }
-//    else if(stmt->fromTable->join->condition->expr->type == hsql::kExprLiteralString && stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralString){
-//        cout << "do join between two string" << endl;
-//
-//    }
-//    else if(stmt->fromTable->join->condition->expr->type == hsql::kExprLiteralInt && stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralInt){
-//        cout << "do join between two integer" << endl;
-//
-//    }
-//
-//    else if(stmt->fromTable->join->condition->expr->type == hsql::kExprColumnRef && stmt->fromTable->join->condition->expr2->type == hsql::kExprColumnRef){
-//        cout <<" do join on columns" << endl;
-//
-//    }
+
     util::PrintJoinRecords(stmt, cols_left, cols_right, t1, t2);
 
 
-
-
-    //compair join
-
-
-    //print
-
-
-//    if(stmt->selectList->size() == 1 && (*stmt->selectList)[0]->type == hsql::kExprStar) {    // select *
-//        for (auto col : t1->table_cols)
-//            cols_left.push_back(make_pair(col->name, col));
-//        for (auto col: t2->table_cols)
-//            cols_right.push_back(make_pair(col->name, col));
-//    }
-//    else{
-//        for(hsql::Expr* expr : *stmt->selectList){
-//
-//            if(expr->type == hsql::kExprLiteralString || expr->type == hsql::kExprColumnRef){   // select C1,C2,...
-//                string colName = expr->name;
-//                column *col_left = t1->getColumn(colName);
-//                column *col_right = t2->getColumn(colName);
-//                if(col_left == NULL){
-//                    cout <<"Column '"<<colName<<"' does not exist in table : " << t1->getName() <<endl;
-//                    return;
-//                }else{
-//                    cols_left.push_back(make_pair(col_left->name, col_left));
-//                }
-//                if(col_right == NULL){
-//                    cout <<"Column "<<colName<<"' does not exist in table : " << t2->getName() <<endl;
-//                }
-//            }else if(expr->type == hsql::kExprLiteralInt){
-//                cols_left.push_back(make_pair(to_string(expr->ival), (column*)NULL));
-//                cols_right.push_back(make_pair(to_string(expr->ival), (column*)NULL));
-//
-//            }
-//        }
-//    }
 }
 
 //need more founctions
