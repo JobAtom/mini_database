@@ -153,7 +153,6 @@ bool table::insert(hsql::InsertStatement *stmt) {
 
 vector<pair<string, column*>> table::select(hsql::SelectStatement *stmt){
 
-
     vector<pair<string, column*>> cols;
 
     if(stmt->selectList->size() == 1 && (*stmt->selectList)[0]->type == hsql::kExprStar) {    // select *
@@ -167,7 +166,7 @@ vector<pair<string, column*>> table::select(hsql::SelectStatement *stmt){
                 string colName = expr->name;
                 column *col = getColumn(colName);
                 if(col == NULL){
-                    cout <<"Column '"<<colName<<"' does not exist"<<endl;
+                    cout <<"Column '"<<colName<<"' does not exist in table "<<getabsName()<<endl;
                     return {};
                 }else{
                     cols.push_back(make_pair(col->name, col));
