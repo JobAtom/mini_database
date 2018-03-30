@@ -272,273 +272,115 @@ bool util::PrintJoinRecords(hsql::SelectStatement *stmt, vector<pair<string, col
     }
     cout << endl;
     //print left records
-    for(int i = 0; i < tleft->getRowlength(); i++){
-
-        //check left condition
-        if(stmt->fromTable->join->condition != NULL){
-            if(stmt->fromTable->join->condition->type != hsql::kExprOperator ||
-               stmt->fromTable->join->condition->opType != hsql::Expr::SIMPLE_OP||
-               stmt->fromTable->join->condition->opChar != '=' ){
-                cout <<"Invalide join condition"<<endl;
-                return false;
-            }
-
-            if(stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralInt||stmt->fromTable->join->condition->expr->type == hsql::kExprLiteralInt){
-                //select column
-                string colName;
-                int compareNum;
-                if(stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralInt) {
-                    if(stmt->fromTable->join->condition->expr->type == hsql::kExprLiteralString){
-                        cout << "cannot do compare between int and char" << endl;
-                        return false;
-                    }
-                    colName = stmt->fromTable->join->condition->expr->name;
-                    compareNum = (int) stmt->fromTable->join->condition->expr2->ival;
-                }
-                else {
-                    if(stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralString){
-                        cout << "cannot do compare between int and char" << endl;
-                        return false;
-                    }
-                    colName = stmt->fromTable->join->condition->expr2->name;
-                    compareNum = (int) stmt->fromTable->join->condition->expr->ival;
-                }
-                column* tempcol = NULL;
-                //check if table have this column
-                for (auto col: tleft->table_cols){
-                    if(colName == col->name){
-                        tempcol = col;
-                    }
-                }
-                if(tempcol == NULL){
-                    cout << "column "<< colName << " do not exist in table" <<endl;
+    for(int i = 0; i < tleft->getRowlength(); i++) {
+        for (int j = 0; j < tright->getRowlength(); j++) {
+            //check left condition
+            if(stmt->fromTable->join->condition != NULL){
+                if (stmt->fromTable->join->condition->type != hsql::kExprOperator ||
+                    stmt->fromTable->join->condition->opType != hsql::Expr::SIMPLE_OP ||
+                    stmt->fromTable->join->condition->opChar != '=') {
+                    cout << "Invalide join condition" << endl;
                     return false;
                 }
-                //get column value
-                osleft.seekg(i * tleft->getrowSize() + tempcol->col_offset);
-                char *bytes = new char[tempcol->element_truesize];
-                osleft.read(bytes, tempcol->element_truesize);
-                //check =
-                if(stmt->whereClause->opChar == '=') {
-                    if(tempcol->flag == "CHAR"){
-                        cout << "cannot do = for char columns with int value" <<endl;
-                        delete bytes;
+                if (stmt->fromTable->join->condition->expr->table != NULL && stmt->fromTable->join->condition->expr2->table != NULL){
+                    char* left_tablename = stmt->fromTable->join->condition->expr->table;
+                    char* right_tablename = stmt->fromTable->join->condition->expr2->table;
+                    char* left_colname = stmt->fromTable->join->condition->expr->name;
+                    char* right_colname = stmt->fromTable->join->condition->expr2->name;
+                    if (!util::compareString(left_tablename, stmt->fromTable->join->left->name)){
+                        cout << "table " << left_tablename << " do not exist" << endl;
                         return false;
                     }
-                    if (*(int *) bytes != compareNum) {
-                        delete bytes;
-                        continue;
-                    }
-                }
-
-            }
-
-            //do char
-            if(stmt->whereClause->expr2->type == hsql::kExprLiteralString||stmt->whereClause->expr->type == hsql::kExprLiteralString){
-                //select column
-                string colName;
-                char* compareChar;
-                if(stmt->whereClause->expr2->type == hsql::kExprLiteralString) {
-                    colName = stmt->whereClause->expr->name;
-                    compareChar = stmt->whereClause->expr2->name;
-                }
-                else {
-                    colName = stmt->whereClause->expr2->name;
-                    compareChar = stmt->whereClause->expr->name;
-                }
-                column* tempcol = NULL;
-                //check if table have this column
-                for (auto col: tleft->table_cols){
-                    if(colName == col->name){
-                        tempcol = col;
-                    }
-                }
-                if(tempcol == NULL){
-                    cout << "column "<< colName << " do not exist in table" <<endl;
-                    return false;
-                }
-                //get column value
-                osleft.seekg(i * tleft->getrowSize() + tempcol->col_offset);
-                char *bytes = new char[tempcol->element_truesize];
-                osleft.read(bytes, tempcol->element_truesize);
-                //check =
-                if(stmt->whereClause->opChar == '=') {
-                    if (!util::compareString(bytes ,compareChar)) {
-                        delete bytes;
-                        continue;
-                    }
-                }
-
-
-            }
-
-        }
-        //printleft
-        for(auto it:colsleft) {
-            column *col = it.second;
-
-            if (col != NULL) {
-                //cout << "rowSize : " << rowSize << endl;
-
-
-                osleft.seekg(i * tleft->getrowSize() + col->col_offset); //i*element_true_size + col->col_offset
-                //cout << "position : " << i * rowSize + col->col_offset<< endl;
-                //TableUtil::printColValue(os, col);
-
-                char *bytes = new char[col->element_truesize];
-                //cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
-                osleft.read(bytes, col->element_truesize);
-
-
-                if ( col->flag == "INT")
-                    cout << left << setw(8) << setfill(' ') << *(int *) bytes;
-                else {
-                    cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
-                         << setfill(' ') << bytes;
-                }
-                delete bytes;
-
-            } else {
-                cout << left << setw(8) << setfill(' ') << it.first;
-            }
-        }
-        cout << endl;
-    }
-    osleft.close();
-
-    //print right records
-    for(int i = 0; i < tright->getRowlength(); i++){
-
-        //check right condition
-        if(stmt->fromTable->join->condition != NULL){
-            if(stmt->fromTable->join->condition->type != hsql::kExprOperator ||
-               stmt->fromTable->join->condition->opType != hsql::Expr::SIMPLE_OP||
-               stmt->fromTable->join->condition->opChar != '=' ){
-                cout <<"Invalide join condition"<<endl;
-                return false;
-            }
-
-            if(stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralInt||stmt->fromTable->join->condition->expr->type == hsql::kExprLiteralInt){
-                //select column
-                string colName;
-                int compareNum;
-                if(stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralInt) {
-                    if(stmt->fromTable->join->condition->expr->type == hsql::kExprLiteralString){
-                        cout << "cannot do compare between int and char" << endl;
+                    else if (!util::compareString(right_tablename, stmt->fromTable->join->right->name)){
+                        cout << "table " << right_tablename << " do not exist" << endl;
                         return false;
                     }
-                    colName = stmt->fromTable->join->condition->expr->name;
-                    compareNum = (int) stmt->fromTable->join->condition->expr2->ival;
-                }
-                else {
-                    if(stmt->fromTable->join->condition->expr2->type == hsql::kExprLiteralString){
-                        cout << "cannot do compare between int and char" << endl;
+                    if( tleft->getColumn(left_colname) == NULL || tright->getColumn(right_colname) == NULL){
+                        cout << "table do not exist those columns" << endl;
                         return false;
                     }
-                    colName = stmt->fromTable->join->condition->expr2->name;
-                    compareNum = (int) stmt->fromTable->join->condition->expr->ival;
-                }
-                column* tempcol = NULL;
-                //check if table have this column
-                for (auto col: tright->table_cols){
-                    if(colName == col->name){
-                        tempcol = col;
-                    }
-                }
-                if(tempcol == NULL){
-                    cout << "column "<< colName << " do not exist in table" <<endl;
-                    return false;
-                }
-                //get column value
-                osright.seekg(i * tright->getrowSize() + tempcol->col_offset);
-                char *bytes = new char[tempcol->element_truesize];
-                osright.read(bytes, tempcol->element_truesize);
-                //check =
-                if(stmt->whereClause->opChar == '=') {
-                    if(tempcol->flag == "CHAR"){
-                        cout << "cannot do = for char columns with int value" <<endl;
-                        delete bytes;
-                        return false;
-                    }
-                    if (*(int *) bytes != compareNum) {
-                        delete bytes;
+                    //check column value
+                    column* colleft = tleft->getColumn(left_colname);
+                    column* colright = tright->getColumn(right_colname);
+                    osleft.seekg(i * tleft->getrowSize() + colleft->col_offset);
+                    char *bytesleft = new char[colleft->element_truesize];
+                    osleft.read(bytesleft, colleft->element_truesize);
+
+                    osright.seekg(j * tright->getrowSize() + colright->col_offset);
+                    char *bytesright = new char[colright->element_truesize];
+                    osright.read(bytesright, colright->element_truesize);
+                    if(!util::compareString(bytesleft, bytesright))
                         continue;
-                    }
+
                 }
 
             }
 
-            //do char
-            if(stmt->whereClause->expr2->type == hsql::kExprLiteralString||stmt->whereClause->expr->type == hsql::kExprLiteralString){
-                //select column
-                string colName;
-                char* compareChar;
-                if(stmt->whereClause->expr2->type == hsql::kExprLiteralString) {
-                    colName = stmt->whereClause->expr->name;
-                    compareChar = stmt->whereClause->expr2->name;
-                }
-                else {
-                    colName = stmt->whereClause->expr2->name;
-                    compareChar = stmt->whereClause->expr->name;
-                }
-                column* tempcol = NULL;
-                //check if table have this column
-                for (auto col: tright->table_cols){
-                    if(colName == col->name){
-                        tempcol = col;
-                    }
-                }
-                if(tempcol == NULL){
-                    cout << "column "<< colName << " do not exist in table" <<endl;
-                    return false;
-                }
-                //get column value
-                osright.seekg(i * tright->getrowSize() + tempcol->col_offset);
-                char *bytes = new char[tempcol->element_truesize];
-                osright.read(bytes, tempcol->element_truesize);
-                //check =
-                if(stmt->whereClause->opChar == '=') {
-                    if (!util::compareString(bytes ,compareChar)) {
-                        delete bytes;
-                        continue;
-                    }
-                }
+            //printleft
+            for (auto it:colsleft) {
+                column *col = it.second;
+
+                if (col != NULL) {
+                    //cout << "rowSize : " << rowSize << endl;
 
 
+                    osleft.seekg(i * tleft->getrowSize() + col->col_offset); //i*element_true_size + col->col_offset
+                    //cout << "position : " << i * rowSize + col->col_offset<< endl;
+                    //TableUtil::printColValue(os, col);
+
+                    char *bytes = new char[col->element_truesize];
+                    //cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
+                    osleft.read(bytes, col->element_truesize);
+
+
+                    if (col->flag == "INT")
+                        cout << left << setw(8) << setfill(' ') << *(int *) bytes;
+                    else {
+                        cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
+                             << setfill(' ') << bytes;
+                    }
+                    delete bytes;
+
+                } else {
+                    cout << left << setw(8) << setfill(' ') << it.first;
+                }
             }
+
+
+            //printright
+            for (auto it:colsright) {
+                column *col = it.second;
+
+                if (col != NULL) {
+                    //cout << "rowSize : " << rowSize << endl;
+
+
+                    osright.seekg(j * tright->getrowSize() + col->col_offset); //i*element_true_size + col->col_offset
+                    //cout << "position : " << i * rowSize + col->col_offset<< endl;
+                    //TableUtil::printColValue(os, col);
+
+                    char *bytes = new char[col->element_truesize];
+                    //cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
+                    osright.read(bytes, col->element_truesize);
+
+
+                    if (col->flag == "INT")
+                        cout << setw(8) << setfill(' ') << *(int *) bytes;
+                    else {
+                        cout << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
+                             << setfill(' ') << bytes;
+                    }
+                    delete bytes;
+
+                } else {
+                    cout << setw(8) << setfill(' ') << it.first;
+                }
+            }
+            cout << endl;
 
         }
-        //printright
-        for(auto it:colsright) {
-            column *col = it.second;
-
-            if (col != NULL) {
-                //cout << "rowSize : " << rowSize << endl;
-
-
-                osright.seekg(i * tright->getrowSize() + col->col_offset); //i*element_true_size + col->col_offset
-                //cout << "position : " << i * rowSize + col->col_offset<< endl;
-                //TableUtil::printColValue(os, col);
-
-                char *bytes = new char[col->element_truesize];
-                //cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
-                osright.read(bytes, col->element_truesize);
-
-
-                if ( col->flag == "INT")
-                    cout << left << setw(8) << setfill(' ') << *(int *) bytes;
-                else {
-                    cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
-                         << setfill(' ') << bytes;
-                }
-                delete bytes;
-
-            } else {
-                cout << left << setw(8) << setfill(' ') << it.first;
-            }
-        }
-        cout << endl;
     }
     osright.close();
+    osleft.close();
 }
 
