@@ -14,6 +14,7 @@ table::table(){
 table::table(const string& name){
     //get table name
     filename = TABLE_PATH + name + ".tbl";
+    absname = name;
 }
 table::~table(){
 
@@ -71,16 +72,27 @@ bool table::insert(hsql::InsertStatement *stmt) {
         //insert value to selected columns
         }
         else{
+            column* primary = getPrimaryKey();
             if(table_cols[i]->flag == "CHAR"){
-
-                // check char size
-
 
                 if((*stmt->values)[i]->type == hsql::kExprLiteralString){
                     const char* str = (*stmt->values)[i]->name ;
                     if( strlen(str) > table_cols[i]->element_truesize ){
                         cout << "Wrong Char size" << endl;
                          return false;
+                    }
+                    if(util::compareString(table_cols[i]->name, primary->name)){
+                        cout << "check primary key values"<<endl;
+                        for(int j=0 ; j < getRowlength(); j++){
+                            os.seekg(j * rowSize + table_cols[i]->col_offset);
+                            char *bytes = new char[table_cols[i]->element_truesize];
+                            os.read(bytes, table_cols[i]->element_truesize);
+                            if(util::compareString(bytes, str)){
+                                cout<<"Can't insert duplicate values to primary key column"<<endl;
+                                return false;
+                            }
+
+                        }
                     }
                     os.write(str,  table_cols[i]->element_truesize ) ;
 
@@ -92,6 +104,18 @@ bool table::insert(hsql::InsertStatement *stmt) {
                         cout << "Wrong Char size" << endl;
                         return false;
                     }
+                    if(util::compareString(table_cols[i]->name, primary->name)){
+                        for(int j=0 ; j < getRowlength(); j++){
+                            os.seekg(j * rowSize + table_cols[i]->col_offset);
+                            char *bytes = new char[table_cols[i]->element_truesize];
+                            os.read(bytes, table_cols[i]->element_truesize);
+                            if(util::compareString(bytes, str)){
+                                cout<<"Can't insert duplicate values to primary key column"<<endl;
+                                return false;
+                            }
+
+                        }
+                    }
                     os.write(str,  table_cols[i]->element_truesize ) ;
                 }
             }
@@ -100,21 +124,21 @@ bool table::insert(hsql::InsertStatement *stmt) {
                     cout<<"need a int value instead of a string"<<endl;
                     return false;
                 }
-                //cout << (*stmt->values)[i]->ival << "Data: " << endl;
+                if(util::compareString(table_cols[i]->name, primary->name)){
+                    for(int j=0 ; j < getRowlength(); j++){
+                        os.seekg(j * rowSize + table_cols[i]->col_offset);
+                        char *bytes = new char[table_cols[i]->element_truesize];
+                        os.read(bytes, table_cols[i]->element_truesize);
+                        cout  << bytes <<endl;
+                        if(util::compareString(bytes, (char*)&(*stmt->values)[i]->ival)){
+                            cout<<"Can't insert duplicate values to primary key column"<<endl;
+                            return false;
+                        }
 
-                os.write(  (char*)&(*stmt->values)[i]->ival, 8) ;
+                    }
+                }
+                os.write((char*)&(*stmt->values)[i]->ival, 8) ;
 
-//                char* bytes = new char[16];
-//
-//                ifstream ifos(filename, ios::in|ios::binary);
-//                ifos.read(bytes, 16);
-//
-//                if(table_cols[i]->flag == "INT")
-//                    cout <<left<<setw(8)<<setfill(' ')<<*(int*)bytes;
-//                else{
-//                    cout<<left<<setw(table_cols[i]->element_size+2 > 8 ? table_cols[i]->element_size+2 : 8)<<setfill(' ')<<bytes;
-//                }
-//                delete bytes;
 
             }
 

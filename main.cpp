@@ -128,7 +128,24 @@ void printTableList(map<string, table*> table_list){
 
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
     cout << "Creating table " << stmt->tableName << "... "<<endl;
-
+    //chect duplicate columns
+    vector<char*> colnames;
+    for(hsql::ColumnDefinition* col_def: *stmt->columns){
+        for(auto colname:colnames){
+            if(util::compareString(colname, col_def->name)){
+                cout<<"Can't create table with duplicate column names"<<endl;
+                return;
+            }
+        }
+        colnames.push_back(col_def->name);
+    }
+    //check if table exist
+    for(auto t:table_list){
+        if(util::compareString(t.second->getabsName(), stmt->tableName)){
+            cout << "table "<<stmt->tableName << " already exists"<<endl;
+            return;
+        }
+    }
     table* newtable = new table(stmt->tableName);
     vector<column* > cols;
     //put cols to table
@@ -341,6 +358,7 @@ void loadTableList(map<string, table*> &table_list){
 
         // primary key
         getline(is, line);
+        t->setPrimaryKey(line.substr(11));
 
         getline(is, line);
         // total size

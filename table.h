@@ -28,6 +28,9 @@ public:
     string getName(){
         return filename;
     };
+    string getabsName(){
+        return absname;
+    }
     int getRowlength(){return rowlength;};
 
     void setRowLength(int length) {rowlength = length; };
@@ -36,6 +39,7 @@ public:
 
 private:
     int recordSize = 0;
+    string absname;
 
     column* primaryKey = NULL;
     string filename;
