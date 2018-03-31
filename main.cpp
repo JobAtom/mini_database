@@ -194,7 +194,11 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
             cout << "insert successful" << endl;
         }
     }
-
+    if (stmt->type == hsql::InsertStatement::kInsertSelect){
+        if(totable->insertSelect(stmt, table_list)){
+            cout << "insert successful" << endl;
+        }
+    }
 
 }
 

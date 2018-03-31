@@ -10,7 +10,6 @@ util::util(){
 }
 
 table* util::getTable(const string &name, map<string, table*> table_list){
-
     for(auto tl : table_list){
         //cout << tl.first << endl;
         string tl_name = tl.first;
@@ -62,7 +61,10 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
 
     if(!os.is_open()){
         cout <<"Can't open table "<< stmt->fromTable->name  <<endl;
-        return NULL;
+        return false;
+    }
+    if(cols.empty()){
+        return false;
     }
     // header
     for(auto it : cols){
@@ -214,21 +216,43 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
             }
 
         }
+        //check duplicates
+        bool duplicates = false;
+        for(int j = 0; j<i; j++){
+            int count_duplicates = 0;
+            int countcol = 0;
+            for(auto it:cols){
+                column* col = it.second;
+                if (col!=NULL){
+                    os.seekg(j * t->getrowSize() + col->col_offset);
+                    char* prebytes = new char[col->element_truesize];
+                    os.read(prebytes, col->element_truesize);
+
+                    os.seekg(i * t->getrowSize() + col->col_offset);
+                    char* curbytes = new char[col->element_truesize];
+                    os.read(curbytes, col->element_truesize);
+                    if(util::compareString(prebytes, curbytes))
+                        count_duplicates += 1;
+                    countcol += 1;
+                    delete prebytes;
+                    delete curbytes;
+                }
+
+            }
+            if(count_duplicates == countcol)
+                duplicates = true;
+        }
+        if(duplicates)
+            continue;
         for(auto it:cols) {
             column *col = it.second;
 
             if (col != NULL) {
-                //cout << "rowSize : " << rowSize << endl;
 
-
-                os.seekg(i * t->getrowSize() + col->col_offset); //i*element_true_size + col->col_offset
-                //cout << "position : " << i * rowSize + col->col_offset<< endl;
-                //TableUtil::printColValue(os, col);
-
+                os.seekg(i * t->getrowSize() + col->col_offset);
                 char *bytes = new char[col->element_truesize];
                 //cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
                 os.read(bytes, col->element_truesize);
-
 
                 if ( col->flag == "INT")
                     cout << left << setw(8) << setfill(' ') << *(int *) bytes;
@@ -236,6 +260,7 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
                     cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
                          << setfill(' ') << bytes;
                 }
+
                 delete bytes;
 
             } else {
@@ -253,7 +278,7 @@ bool util::PrintJoinRecords(hsql::SelectStatement *stmt, vector<pair<string, col
 
     if(!osleft.is_open() or !osright.is_open()){
         cout <<"Can't open table "<< stmt->fromTable->name  <<endl;
-        return NULL;
+        return false;
     }
     // header
     for(auto it : colsleft){

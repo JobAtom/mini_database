@@ -16,8 +16,8 @@ public:
     ~column();
 
     int col_offset = 0;
-    int element_size;
-    int element_truesize;
+    int element_size = 0;
+    int element_truesize = 0;
 
     string name;
     string flag;

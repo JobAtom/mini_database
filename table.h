@@ -4,6 +4,7 @@
 #include <string>
 #include "column.h"
 #include "sql/statements.h"
+#include <map>
 
 using namespace std;
 
@@ -17,6 +18,7 @@ public:
     column* getColumn(const string &name);
     void setPrimaryKey(const string &name);
     bool insert(hsql::InsertStatement *stmt);
+    bool insertSelect(hsql::InsertStatement * stmt, map<string, table*> &table_list);
 
     vector<pair<string, column*>> select(hsql::SelectStatement *stmt);
 
