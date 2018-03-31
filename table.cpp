@@ -256,7 +256,7 @@ bool table::insertSelect(hsql::InsertStatement *stmt, map<string, table*> &table
                     os.read(bytes, table_cols[j]->element_truesize);
                     if (util::compareString(bytes, str)) {
                         cout << "Can't insert duplicate values to primary key column" << endl;
-                        delete bytes;
+                        //delete bytes;
                         caninsert = false;
                     }
                     delete bytes;
