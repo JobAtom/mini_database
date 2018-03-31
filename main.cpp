@@ -20,6 +20,7 @@ using namespace std;
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
+void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list);
 void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
 void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt);
 
@@ -101,12 +102,8 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
         case hsql::kStmtShow:
             cout << "Show" <<endl;
-            //executeShow((hsql::ShowStatement*)stmt);
+            executeShow((hsql::ShowStatement*)stmt, table_list);
             break;
-//        case hsql::kStmtDrop:
-//            cout << "Drop" <<endl;
-//            //executeDrop((hsql::DropStatement*)stmt, table_list);
-//            break;
         default:
             break;
     }
@@ -127,7 +124,7 @@ void printTableList(map<string, table*> table_list){
 
 
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
-    cout << "Creating table " << stmt->tableName << "... "<<endl;
+    cout << "Creating table " << stmt->tableName << "... " <<endl;
     //chect duplicate columns
     vector<char*> colnames;
     for(hsql::ColumnDefinition* col_def: *stmt->columns){
@@ -202,6 +199,54 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
 
 }
 
+
+void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list){
+    ifstream is("CATALOG.txt");
+    string line;
+    if(stmt->tableName ){
+        while(getline(is, line)){
+                if (stmt->tableName == line.substr(10)){
+                    cout << "Table " << line.substr(10) << "(" ;
+                    // columns
+                    getline(is, line);
+                    cout << line.substr(8) ;
+                    //primaryKey
+                    getline(is, line);
+                    cout << "," << line << ")"<< endl;
+                    getline(is,line);
+                    getline(is, line);
+                    getline(is, line);
+                }
+                else{
+                    getline(is, line);
+                    getline(is, line);
+                    getline(is, line);
+                    getline(is, line);
+                    getline(is, line);
+                }
+        }
+    }
+    else {
+        while(getline(is, line)){
+            //table name
+            cout << "Table " << line.substr(10) << "(" ;
+            // columns
+            getline(is, line);
+            cout << line.substr(8) ;
+            //primaryKey
+            getline(is, line);
+            cout << "," << line << ")"<< endl;
+            //recordsize
+            getline(is,line);
+            // total size
+            getline(is, line);
+            // records
+            getline(is, line);
+        }
+    }
+
+}
+
 void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list){
     if(stmt->fromTable->type == hsql::kTableName){
         table* totable = util::getTable(stmt->fromTable->name, table_list);
@@ -268,7 +313,6 @@ void saveToFile(map<string, table*> &map_list){
             os << "primaryKey=" << tl.second->getPrimaryKey()->name << endl;
         else
             os << "primaryKey=NULL" << endl;
-
         os << "recordsize="<<tl.second->getRecordSize() << endl;
         os << "totalrecordsize="<<tl.second->getTotalRecordSize() << endl;
         os << "records="<< tl.second->getRowlength()<< endl;
