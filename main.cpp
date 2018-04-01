@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <stdlib.h>
 #include <string>
 #include "SQLParser.h"
 #include "sqlhelper.h"
@@ -33,7 +34,7 @@ inline std::vector<std::string> split(const std::string &s, char delim);
 
 int main(int argc, char * argv[]){
     if(argc <= 1){
-        cout<<"please input query to start SQL!"<<endl;
+        cout<<"please input query to start or use script=filename to start SQL!"<<endl;
         exit(1);
     }
     string query = "";
@@ -41,22 +42,23 @@ int main(int argc, char * argv[]){
         query += argv[i];
         query += " ";
     }
-    query += ";";
 
-    if(query.find("script="))
-    {
-        //read script and run sql by script
-
-    }
     map<string, table*> table_list;
 
     loadTableList(table_list);
 
-    while(true) {
-
-       // printTableList(table_list);
-
-        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+    if(query.find("script=")== 0)
+    {
+        //read script and run sql by script
+        cout << "run script " << endl;
+        ifstream file(query.substr(7, query.length()-8));
+        if(!file.is_open())
+        {
+            cout << "file cannot opened" <<endl;
+        }
+        stringstream buffer;
+        buffer << file.rdbuf();
+        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer.str());
         // check whether the parsing was successful
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
@@ -69,20 +71,45 @@ int main(int argc, char * argv[]){
             cout << "Given string is not a valid SQL query." << endl
                  << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
         }
-        query.clear();
-        cout << "SQL>";
+        return 0;
 
 
-        while(query.find(";") == string::npos){
-            string line;
-            getline(cin, line);
-            query += line;
-        }
-        if (query == "quit;") {
-            saveToFile(table_list);
-            exit(0);
+    }
+    else{
+        query += ";";
+        while(true) {
+
+            // printTableList(table_list);
+
+            hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+            // check whether the parsing was successful
+            if (result->isValid()) {
+                for (unsigned i = 0; i < result->size(); ++i) {
+                    //run sql query
+                    executeStatement(result->getMutableStatement(i), table_list);
+                    saveToFile(table_list);
+
+                }
+            } else {
+                cout << "Given string is not a valid SQL query." << endl
+                     << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+            }
+            query.clear();
+            cout << "SQL>";
+
+
+            while(query.find(";") == string::npos){
+                string line;
+                getline(cin, line);
+                query += line;
+            }
+            if (query == "quit;") {
+                saveToFile(table_list);
+                exit(0);
+            }
         }
     }
+
     return 0;
 }
 
