@@ -14,6 +14,7 @@ table::table(){
 table::table(const string& name){
     //get table name
     filename = TABLE_PATH + name + ".tbl";
+    absname = name;
 }
 table::~table(){
 
@@ -48,8 +49,8 @@ bool table::insert(hsql::InsertStatement *stmt) {
         cout <<"Column count doesn't match value count"<<endl;
         return false;
     }
-    if(stmt->columns == NULL && table_cols.size() < stmt->values->size()){
-        cout <<"INSERT has more expressions than target columns"<<endl;
+    if(stmt->columns == NULL && table_cols.size() != stmt->values->size()){
+        cout <<"INSERT has different number of columns than target columns"<<endl;
         return false;
     }
     if(stmt->columns != NULL){
@@ -66,52 +67,96 @@ bool table::insert(hsql::InsertStatement *stmt) {
         cout << "cannot open table file" <<endl;
         return false;
     }
+
+    //check insert type
+    column* primary = getPrimaryKey();
+    for(int i=0; i < table_cols.size(); i++){
+
+        if(table_cols[i]->flag == "CHAR"){
+            if((*stmt->values)[i]->type == hsql::kExprLiteralString){
+                const char* str = (*stmt->values)[i]->name ;
+                if( strlen(str) > table_cols[i]->element_truesize ){
+                    cout << "Wrong Char size" << endl;
+                    return false;
+                }
+                if(primary != nullptr && util::compareString(table_cols[i]->name, primary->name)){
+                    cout << "check primary key values"<<endl;
+                    for(int j=0 ; j < getRowlength(); j++){
+                        os.seekg(j * rowSize + table_cols[i]->col_offset);
+                        char *bytes = new char[table_cols[i]->element_truesize];
+                        os.read(bytes, table_cols[i]->element_truesize);
+                        if(util::compareString(bytes, str)){
+                            cout<<"Can't insert duplicate values to primary key column"<<endl;
+                            delete bytes;
+                            return false;
+                        }
+
+                    }
+                }
+
+            }
+            else{
+                const char* str = to_string( (*stmt->values)[i]->ival ).c_str();
+                if( strlen(str) > table_cols[i]->element_truesize ){
+                    cout << "Wrong Char size" << endl;
+                    return false;
+                }
+                if(primary!=nullptr&&util::compareString(table_cols[i]->name, primary->name)){
+                    for(int j=0 ; j < getRowlength(); j++){
+                        os.seekg(j * rowSize + table_cols[i]->col_offset);
+                        char *bytes = new char[table_cols[i]->element_truesize];
+                        os.read(bytes, table_cols[i]->element_truesize);
+                        if(util::compareString(bytes, str)){
+                            cout<<"Can't insert duplicate values to primary key column"<<endl;
+                            delete bytes;
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        else{
+            if((*stmt->values)[i]->type == hsql::kExprLiteralString){
+                cout<<"need a int value instead of a string"<<endl;
+                return false;
+            }
+            if(primary!= nullptr && util::compareString(table_cols[i]->name, primary->name)){
+                for(int j=0 ; j < getRowlength(); j++){
+                    os.seekg(j * rowSize + table_cols[i]->col_offset);
+                    char *bytes = new char[table_cols[i]->element_truesize];
+                    os.read(bytes, table_cols[i]->element_truesize);
+                    //cout  << bytes <<endl;
+                    if(util::compareString(bytes, (char*)&(*stmt->values)[i]->ival)){
+                        cout<<"Can't insert duplicate values to primary key column"<<endl;
+                        delete bytes;
+                        return false;
+                    }
+
+                }
+            }
+
+        }
+    }
+
+    //do insert
     for(int i = 0; i < table_cols.size(); i++){
-        cout << "save cols"<<endl;
         if(stmt->columns != NULL){
         //insert value to selected columns
         }
         else{
             if(table_cols[i]->flag == "CHAR"){
-
-                // check char size
-
-
                 if((*stmt->values)[i]->type == hsql::kExprLiteralString){
                     const char* str = (*stmt->values)[i]->name ;
-                    if( strlen(str) > table_cols[i]->element_truesize ){
-                        cout << "Wrong Char size" << endl;
-                         return false;
-                    }
                     os.write(str,  table_cols[i]->element_truesize ) ;
 
                 }
                 else{
                     const char* str = to_string( (*stmt->values)[i]->ival ).c_str();
-
-                    if( strlen(str) > table_cols[i]->element_truesize ){
-                        cout << "Wrong Char size" << endl;
-                        return false;
-                    }
                     os.write(str,  table_cols[i]->element_truesize ) ;
                 }
             }
             else{
-                //cout << (*stmt->values)[i]->ival << "Data: " << endl;
-
-                os.write(  (char*)&(*stmt->values)[i]->ival, 8) ;
-
-//                char* bytes = new char[16];
-//
-//                ifstream ifos(filename, ios::in|ios::binary);
-//                ifos.read(bytes, 16);
-//
-//                if(table_cols[i]->flag == "INT")
-//                    cout <<left<<setw(8)<<setfill(' ')<<*(int*)bytes;
-//                else{
-//                    cout<<left<<setw(table_cols[i]->element_size+2 > 8 ? table_cols[i]->element_size+2 : 8)<<setfill(' ')<<bytes;
-//                }
-//                delete bytes;
+                os.write((char*)&(*stmt->values)[i]->ival, 8) ;
 
             }
 
@@ -124,66 +169,124 @@ bool table::insert(hsql::InsertStatement *stmt) {
 }
 
 
-bool table::select(hsql::SelectStatement *stmt){
+vector<pair<string, column*>> table::select(hsql::SelectStatement *stmt){
 
-    ifstream os(filename, ios::in|ios::binary);
-
-    if(!os.is_open()){
-        cout <<"Can't open table "<< stmt->fromTable->name  <<endl;
-        return false;
-    }
     vector<pair<string, column*>> cols;
 
     if(stmt->selectList->size() == 1 && (*stmt->selectList)[0]->type == hsql::kExprStar) {    // select *
         for (auto col : table_cols)
             cols.push_back(make_pair(col->name, col));
     }
+    else{
+        for(hsql::Expr* expr : *stmt->selectList){
 
-
-    // header
-    for(auto it : cols){
-        column* col = it.second;
-        if(col == NULL || col->flag == "INT")
-           cout <<left<<setw(8)<<setfill(' ')<<it.first;
-        else if(col->flag == "CHAR")
-            cout <<left<<setw(col->element_size +2 > 8 ? col->element_size+2 : 8)<<setfill(' ')<<it.first;
-    }
-    //
-    //cout << rowlength << endl;
-    for(int i = 0; i < rowlength; i++){
-
-
-        for(auto it:cols) {
-            column *col = it.second;
-
-            if (col != NULL) {
-                cout << "rowSize : " << rowSize << endl;
-
-
-                os.seekg(i * rowSize + col->col_offset); //i*element_true_size + col->col_offset
-                cout << "position : " << i * rowSize + col->col_offset<< endl;
-                //TableUtil::printColValue(os, col);
-
-                char *bytes = new char[col->element_truesize];
-                cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
-                os.read(bytes, col->element_truesize);
-
-
-                if ( col->flag == "INT")
-                    cout << left << setw(8) << setfill(' ') << *(int *) bytes;
-                else {
-                    cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
-                         << setfill(' ') << bytes;
+            if(expr->type == hsql::kExprLiteralString || expr->type == hsql::kExprColumnRef){   // select C1,C2,...
+                string colName = expr->name;
+                column *col = getColumn(colName);
+                if(col == NULL){
+                    cout <<"Column '"<<colName<<"' does not exist in table "<<getabsName()<<endl;
+                    return {};
+                }else{
+                    cols.push_back(make_pair(col->name, col));
                 }
-                delete bytes;
-
-            } else {
-                cout << left << setw(8) << setfill(' ') << it.first;
-            }
-            cout << endl;
+            }//else if(expr->type == hsql::kExprLiteralInt){
+            //    cols.push_back(make_pair(to_string(expr->ival), (column*)NULL));
+            //}
         }
     }
+    return cols;
+
+}
+
+bool table::insertSelect(hsql::InsertStatement *stmt, map<string, table*> &table_list) {
+    table* fromtable = util::getTable(stmt->select->fromTable->name, table_list);
+    if(fromtable == nullptr){
+        cout << "table: "<<stmt->select->fromTable->name<<" exist in database"<<endl;
+        return false;
+    }
+    vector<pair<string, column*>> selected_cols = fromtable->select(stmt->select);
+
+    if(!selected_cols.empty()  && table_cols.size() != selected_cols.size()){
+        cout <<"INSERT has different number of columns than target columns"<<endl;
+        return false;
+    }
+    if(selected_cols.empty()){
+        return false;
+    }
+
+
+    //check table type
+    for(int i = 0; i < table_cols.size(); i++){
+        if(table_cols[i]->flag != selected_cols[i].second->flag){
+            cout << "table " << fromtable->getabsName() << " have different columns as table " << getabsName() << endl;
+            return false;
+        }
+        if(table_cols[i]->flag == "CHAR"){
+            if(table_cols[i]->element_truesize < selected_cols[i].second->element_truesize){
+                cout << "target table char size can't fit" <<endl;
+                return false;
+            }
+        }
+
+    }
+    column* primary = getPrimaryKey();
+    fstream os(filename, ios::in|ios::out|ios::binary|ios::app);
+    ifstream os_from(fromtable->getName(), ios::in|ios::binary);
+
+    if(!os.is_open()){
+        cout << "cannot open table file" <<endl;
+        return false;
+    }
+    if(!os_from.is_open()){
+        cout << "cannot open select table file"<<endl;
+        return false;
+    }
+
+    for(int i = 0; i < fromtable->getRowlength(); i++){
+        //check if this row can be inserted
+        bool caninsert = true;
+        for(int j=0; j < table_cols.size(); j++){
+            os_from.seekg(i * fromtable->getrowSize() + selected_cols[j].second->col_offset);
+            char* str = new char[selected_cols[j].second->element_truesize];
+            os_from.read(str, selected_cols[j].second->element_truesize);
+            if(primary != nullptr && util::compareString(table_cols[j]->name, primary->name)){
+                for(int k=0 ; k < getRowlength(); k++) {
+                    os.seekg(k * rowSize + table_cols[j]->col_offset);
+                    char *bytes = new char[table_cols[j]->element_truesize];
+                    os.read(bytes, table_cols[j]->element_truesize);
+                    if (util::compareString(bytes, str)) {
+                        cout << "Can't insert duplicate values to primary key column" << endl;
+                        //delete bytes;
+                        caninsert = false;
+                    }
+                    delete bytes;
+                }
+            }
+            delete str;
+        }
+        //do insert
+        if(caninsert){
+            for(int j=0; j < table_cols.size(); j++){
+                os_from.seekg(i * fromtable->getrowSize() + selected_cols[j].second->col_offset);
+                char* str = new char[selected_cols[j].second->element_truesize];
+                os_from.read(str, selected_cols[j].second->element_truesize);
+//
+//                char* bytes = new char[table_cols[j]->element_truesize];
+//                for(int z = 0 ; z < strlen(str); z++){
+//                    bytes[z] = str[z];
+//                }
+                os.write(str, table_cols[j]->element_truesize);
+
+                delete str;
+
+            }
+            rowlength++;
+        }
+    }
+
     os.close();
+    os_from.close();
+    return true;
 
 }
 

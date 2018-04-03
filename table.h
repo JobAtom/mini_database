@@ -4,6 +4,7 @@
 #include <string>
 #include "column.h"
 #include "sql/statements.h"
+#include <map>
 
 using namespace std;
 
@@ -17,17 +18,21 @@ public:
     column* getColumn(const string &name);
     void setPrimaryKey(const string &name);
     bool insert(hsql::InsertStatement *stmt);
+    bool insertSelect(hsql::InsertStatement * stmt, map<string, table*> &table_list);
 
-    bool select(hsql::SelectStatement *stmt);
+    vector<pair<string, column*>> select(hsql::SelectStatement *stmt);
 
     int getRecordSize(){return recordSize;};
     int getTotalRecordSize() { return totalRecordSize;};
     vector<column*> table_cols;
-
+    int getrowSize() {return rowSize;};
     column* getPrimaryKey(){return primaryKey;};
     string getName(){
         return filename;
     };
+    string getabsName(){
+        return absname;
+    }
     int getRowlength(){return rowlength;};
 
     void setRowLength(int length) {rowlength = length; };
@@ -36,6 +41,7 @@ public:
 
 private:
     int recordSize = 0;
+    string absname;
 
     column* primaryKey = NULL;
     string filename;

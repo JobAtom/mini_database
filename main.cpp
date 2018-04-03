@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <stdlib.h>
 #include <string>
 #include "SQLParser.h"
 #include "sqlhelper.h"
@@ -10,6 +11,7 @@
 #include <iterator>
 #include <cstring>
 #include <map>
+#include <vector>
 #include <fstream>
 #include "table.h"
 #include "util.h"
@@ -19,7 +21,9 @@ using namespace std;
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
+void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list);
 void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
+void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt);
 
 void loadFromFile(map<string, table*> &map_list);
 void saveToFile(map<string, table*> &map_list);
@@ -30,7 +34,7 @@ inline std::vector<std::string> split(const std::string &s, char delim);
 
 int main(int argc, char * argv[]){
     if(argc <= 1){
-        cout<<"please input query to start SQL!"<<endl;
+        cout<<"please input query to start or use script=filename to start SQL!"<<endl;
         exit(1);
     }
     string query = "";
@@ -38,22 +42,23 @@ int main(int argc, char * argv[]){
         query += argv[i];
         query += " ";
     }
-    query += ";";
 
-    if(query.find("script="))
-    {
-        //read script and run sql by script
-
-    }
     map<string, table*> table_list;
 
     loadTableList(table_list);
 
-    while(true) {
-
-       // printTableList(table_list);
-
-        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+    if(query.find("script=")== 0)
+    {
+        //read script and run sql by script
+        cout << "run script " << endl;
+        ifstream file(query.substr(7, query.length()-8));
+        if(!file.is_open())
+        {
+            cout << "file cannot opened" <<endl;
+        }
+        stringstream buffer;
+        buffer << file.rdbuf();
+        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer.str());
         // check whether the parsing was successful
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
@@ -66,20 +71,45 @@ int main(int argc, char * argv[]){
             cout << "Given string is not a valid SQL query." << endl
                  << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
         }
-        query.clear();
-        cout << "SQL>";
+        return 0;
 
 
-        while(query.find(";") == string::npos){
-            string line;
-            getline(cin, line);
-            query += line;
-        }
-        if (query == "quit;") {
-            saveToFile(table_list);
-            exit(0);
+    }
+    else{
+        query += ";";
+        while(true) {
+
+            // printTableList(table_list);
+
+            hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+            // check whether the parsing was successful
+            if (result->isValid()) {
+                for (unsigned i = 0; i < result->size(); ++i) {
+                    //run sql query
+                    executeStatement(result->getMutableStatement(i), table_list);
+                    saveToFile(table_list);
+
+                }
+            } else {
+                cout << "Given string is not a valid SQL query." << endl
+                     << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+            }
+            query.clear();
+            cout << "SQL>";
+
+
+            while(query.find(";") == string::npos){
+                string line;
+                getline(cin, line);
+                query += line;
+            }
+            if (query == "quit;") {
+                saveToFile(table_list);
+                exit(0);
+            }
         }
     }
+
     return 0;
 }
 
@@ -99,12 +129,8 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
         case hsql::kStmtShow:
             cout << "Show" <<endl;
-            //executeShow((hsql::ShowStatement*)stmt);
+            executeShow((hsql::ShowStatement*)stmt, table_list);
             break;
-//        case hsql::kStmtDrop:
-//            cout << "Drop" <<endl;
-//            //executeDrop((hsql::DropStatement*)stmt, table_list);
-//            break;
         default:
             break;
     }
@@ -125,8 +151,25 @@ void printTableList(map<string, table*> table_list){
 
 
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
-    cout << "Creating table " << stmt->tableName << "... "<<endl;
-
+    cout << "Creating table " << stmt->tableName << "... " <<endl;
+    //chect duplicate columns
+    vector<char*> colnames;
+    for(hsql::ColumnDefinition* col_def: *stmt->columns){
+        for(auto colname:colnames){
+            if(util::compareString(colname, col_def->name)){
+                cout<<"Can't create table with duplicate column names"<<endl;
+                return;
+            }
+        }
+        colnames.push_back(col_def->name);
+    }
+    //check if table exist
+    for(auto t:table_list){
+        if(util::compareString(t.second->getabsName(), stmt->tableName)){
+            cout << "table "<<stmt->tableName << " already exists"<<endl;
+            return;
+        }
+    }
     table* newtable = new table(stmt->tableName);
     vector<column* > cols;
     //put cols to table
@@ -170,31 +213,107 @@ void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
         return;
     }
 
-    //cout << hsql::InsertStatement::kInsertValues << endl;
-
-    cout << stmt->type << endl;
     if (stmt->type == hsql::InsertStatement::kInsertValues){
         if(totable->insert(stmt)){
             cout << "insert successful" << endl;
         }
     }
+    if (stmt->type == hsql::InsertStatement::kInsertSelect){
+        if(totable->insertSelect(stmt, table_list)){
+            cout << "insert successful" << endl;
+        }
+    }
 
+}
+
+
+void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list){
+    ifstream is("CATALOG.txt");
+    string line;
+    if(stmt->tableName ){
+        while(getline(is, line)){
+                if (stmt->tableName == line.substr(10)){
+                    cout << "Table " << line.substr(10) << "(" ;
+                    // columns
+                    getline(is, line);
+                    cout << line.substr(8) ;
+                    //primaryKey
+                    getline(is, line);
+                    cout << "," << line << ")"<< endl;
+                    getline(is,line);
+                    getline(is, line);
+                    getline(is, line);
+                }
+                else{
+                    getline(is, line);
+                    getline(is, line);
+                    getline(is, line);
+                    getline(is, line);
+                    getline(is, line);
+                }
+        }
+    }
+    else {
+        while(getline(is, line)){
+            //table name
+            cout << "Table " << line.substr(10) << "(" ;
+            // columns
+            getline(is, line);
+            cout << line.substr(8) ;
+            //primaryKey
+            getline(is, line);
+            cout << "," << line << ")"<< endl;
+            //recordsize
+            getline(is,line);
+            // total size
+            getline(is, line);
+            // records
+            getline(is, line);
+        }
+    }
 
 }
 
 void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list){
+    if(stmt->fromTable->type == hsql::kTableName){
+        table* totable = util::getTable(stmt->fromTable->name, table_list);
+        if(totable == NULL){
+            cout<< "did not find table " << stmt->fromTable->name << " from database"<<endl;
+            return;
+        }
 
-    table* totable = util::getTable(stmt->fromTable->name, table_list);
-    cout << "table: "<< totable->getName() << endl;
+        if(totable != nullptr) {
+            //totable->select(stmt);
+            util::PrintRecords(stmt, totable->select(stmt), totable);
+        }
+    }
+    else{//do join
+        cout<< "join" <<endl;
+        char* leftname = stmt->fromTable->join->left->getName();
+        char* rightname =  stmt->fromTable->join->right->getName();
+        table* lefttable = util::getTable(leftname, table_list);
+        table* righttable = util::getTable(rightname, table_list);
+        if(lefttable==nullptr)
+            cout << "table "<< leftname << " do not exist" << endl;
+        if (righttable == nullptr)
+            cout << "table "<< rightname << " do not exist" << endl;
+        if(lefttable != nullptr && righttable != nullptr){
+            //join
+            joinTable(lefttable, righttable, stmt);
+        }
 
-    if(totable != nullptr) {
-        totable->select(stmt);
-
-    }else{
-        cout << "table not exist"<< endl;
     }
 
+}
+void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt){
 
+    vector<pair<string, column*>> cols_left;
+    vector<pair<string, column*>> cols_right;
+
+    cols_left = t1->select(stmt);
+    cols_right = t2->select(stmt);
+
+    util::PrintJoinRecords(stmt, cols_left, cols_right, t1, t2);
 
 
 }
@@ -221,7 +340,6 @@ void saveToFile(map<string, table*> &map_list){
             os << "primaryKey=" << tl.second->getPrimaryKey()->name << endl;
         else
             os << "primaryKey=NULL" << endl;
-
         os << "recordsize="<<tl.second->getRecordSize() << endl;
         os << "totalrecordsize="<<tl.second->getTotalRecordSize() << endl;
         os << "records="<< tl.second->getRowlength()<< endl;
@@ -252,6 +370,7 @@ void loadTableList(map<string, table*> &table_list){
 
         // primary key
         getline(is, line);
+        t->setPrimaryKey(line.substr(11));
 
         getline(is, line);
         // total size
