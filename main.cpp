@@ -58,7 +58,12 @@ int main(int argc, char * argv[]){
         }
         stringstream buffer;
         buffer << file.rdbuf();
-        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer.str());
+        string wholequery = "";
+        for(auto c : buffer.str()){
+            if(c != '\r')
+                wholequery += c;
+        }
+        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(wholequery);
         // check whether the parsing was successful
         if (result->isValid()) {
             for (unsigned i = 0; i < result->size(); ++i) {
