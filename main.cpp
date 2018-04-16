@@ -15,6 +15,8 @@
 #include <fstream>
 #include "table.h"
 #include "util.h"
+#include <pthread.h>
+#include "util.h"
 
 using namespace std;
 
@@ -49,6 +51,75 @@ int main(int argc, char * argv[]){
 
     if(query.find("script=")== 0)
     {
+        //transcation part
+        if(query.find("numthreads")){
+            cout<<"do transaction"<<endl;
+            string temp = "";
+            string filename = "";
+            string pkcolumn = "";
+            int num_threads = 10;
+            for(auto p : query.substr(7)){
+                if(p == ';' | p == ' '){
+                    if(filename == ""){
+                        filename = temp;
+                    }
+                    else if(temp.find("numthreads") == 0){
+                        num_threads = stoi(temp.substr(11));
+                    }
+                    else if(temp.find("pkcolumn") == 0){
+                        pkcolumn = temp.substr(9);
+                    }
+                    temp = "";
+                }
+                else
+                    temp += p;
+
+            }
+            temp = "";
+            //read script sql build thread
+
+            ifstream file(filename);
+            if(!file.is_open()){
+                cout<< "file cannot opened"<<endl;
+            }
+            string buffer="";
+            while(getline(file, temp)){
+                if(temp.length() < 1)
+                    continue;
+                if(util::compareString(temp.substr(temp.length()-1) , ";")){
+                    buffer +=" " + temp;
+                    //deal with buffer
+                    if(buffer.find("BEGIN TRANSACTION") != string::npos){
+                        buffer = buffer.substr(18);
+                    }
+                    else if(buffer.find("COMMIT") != string::npos|buffer.find("END TRANSACTION") != string::npos){
+                        //do save
+
+                        continue;
+                    }
+                    cout << "buffer:"<<buffer <<endl;
+                    hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
+                    if (result->isValid()) {
+                        for (unsigned i = 0; i < result->size(); ++i) {
+                            //run sql query
+                            executeStatement(result->getMutableStatement(i), table_list);
+                            saveToFile(table_list);
+
+                        }
+                    } else {
+                        cout << "Given string is not a valid SQL query." << endl
+                             << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+                    }
+                    buffer = "";
+                } else
+                    buffer += " " + temp;
+            }
+
+
+
+            return 0;
+        }
+
         //read script and run sql by script
         cout << "run script " << endl;
         ifstream file(query.substr(7, query.length()-8));
@@ -76,6 +147,7 @@ int main(int argc, char * argv[]){
             cout << "Given string is not a valid SQL query." << endl
                  << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
         }
+
         return 0;
 
 
