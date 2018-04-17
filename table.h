@@ -19,6 +19,7 @@ public:
     void setPrimaryKey(const string &name);
     bool insert(hsql::InsertStatement *stmt);
     bool insertSelect(hsql::InsertStatement * stmt, map<string, table*> &table_list);
+    bool update(hsql::UpdateStatement *stmt);
 
     vector<pair<string, column*>> select(hsql::SelectStatement *stmt);
 

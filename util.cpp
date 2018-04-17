@@ -244,6 +244,7 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
         }
         if(duplicates)
             continue;
+        //do print
         for(auto it:cols) {
             column *col = it.second;
 
@@ -253,6 +254,7 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
                 char *bytes = new char[col->element_truesize];
                 //cout << "bytes: " << bytes << " -- true size: " << col->element_truesize << endl;
                 os.read(bytes, col->element_truesize);
+
 
                 if ( col->flag == "INT")
                     cout << left << setw(8) << setfill(' ') << *(int *) bytes;
@@ -270,6 +272,7 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
         cout << endl;
     }
     os.close();
+    return true;
 }
 bool util::PrintJoinRecords(hsql::SelectStatement *stmt, vector<pair<string, column *>> colsleft,
                             vector<pair<string, column *>> colsright, table *tleft, table *tright) {

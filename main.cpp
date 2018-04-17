@@ -25,6 +25,7 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
 void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
 void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list);
 void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
+void executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list);
 void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt);
 
 void loadFromFile(map<string, table*> &map_list);
@@ -93,23 +94,23 @@ int main(int argc, char * argv[]){
                         buffer = buffer.substr(18);
                     }
                     else if(buffer.find("COMMIT") != string::npos|buffer.find("END TRANSACTION") != string::npos){
-                        //do save
+                        //do save using sql parser
+                        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
+                        if (result->isValid()) {
+                            for (unsigned i = 0; i < result->size(); ++i) {
+                                //run sql query
+                                executeStatement(result->getMutableStatement(i), table_list);
+                                saveToFile(table_list);
 
+                            }
+                        } else {
+                            cout << "Given string is not a valid SQL query." << endl
+                                 << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+                        }
                         continue;
                     }
                     cout << "buffer:"<<buffer <<endl;
-                    hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
-                    if (result->isValid()) {
-                        for (unsigned i = 0; i < result->size(); ++i) {
-                            //run sql query
-                            executeStatement(result->getMutableStatement(i), table_list);
-                            saveToFile(table_list);
 
-                        }
-                    } else {
-                        cout << "Given string is not a valid SQL query." << endl
-                             << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
-                    }
                     buffer = "";
                 } else
                     buffer += " " + temp;
@@ -208,6 +209,9 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             cout << "Show" <<endl;
             executeShow((hsql::ShowStatement*)stmt, table_list);
             break;
+        case hsql::kStmtUpdate:
+            cout << "Updaet" <<endl;
+            executeUpdate((hsql::UpdateStatement*)stmt, table_list);
         default:
             break;
     }
@@ -393,6 +397,22 @@ void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt){
     util::PrintJoinRecords(stmt, cols_left, cols_right, t1, t2);
 
 
+}
+
+void executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list){
+    if(stmt->table->type == hsql::kTableName) {
+        table *totable = util::getTable(stmt->table->name, table_list);
+        if (totable == NULL) {
+            cout << "did not find table " << stmt->table->name << " from database" << endl;
+            return;
+        }
+        if(totable != nullptr){
+            if(totable->update(stmt))
+                cout << "update successful"<<endl;
+            else
+                cout << "update false" << endl;
+        }
+    }
 }
 
 //need more founctions
