@@ -1,5 +1,5 @@
 
-CREATE TABLE person (personid INT, name CAHR(40), transstatus CHAR(20), PRIMARY KEY (personid) );
+CREATE TABLE person (personid INT, name CHAR(40), transstatus CHAR(20), PRIMARY KEY (personid) );
 CREATE TABLE account (accountid INT, personid INT, balance INT, PRIMARY KEY (accountid) );
 
 INSERT INTO person VALUES ( 1 , 'aobo', '');
