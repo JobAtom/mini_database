@@ -20,6 +20,7 @@
 #include "ThreadPool.cpp"
 
 
+
 using namespace std;
 
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
@@ -87,6 +88,8 @@ int main(int argc, char * argv[]){
             bool locks[num_threads];
             memset(locks, false, num_threads*sizeof(bool));
 
+            //map<string, int> locks;
+
             ThreadPool threads(num_threads);
             string transbuffer = "";
             //read .sql file to transcations
@@ -107,9 +110,9 @@ int main(int argc, char * argv[]){
                         transbuffer = buffer.substr(18);
                         while(getline(file, t_temp)){
                             transbuffer += " " + t_temp;
-                            if(transbuffer.find("END TRANSACTION") != string::npos){
 
-                                //threads.doJob(executeTransaction, transbuffer, pkcolumn);
+                            if(transbuffer.find("END TRANSACTION") != string::npos){
+                                //threads.doJob(executeTransaction, transbuffer, pkcolumn, lockid, &locks);
                                 //threads.doJob(std::bind(testthread, 1));
                                 cout << "execute transcation" <<endl;
                                 cout << transbuffer <<endl;
