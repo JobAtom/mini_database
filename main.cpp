@@ -17,6 +17,8 @@
 #include "util.h"
 #include <pthread.h>
 #include "util.h"
+#include "ThreadPool.cpp"
+
 
 using namespace std;
 
@@ -35,7 +37,9 @@ void loadTableList(map<string, table*> & table_list);
 inline std::vector<std::string> split(const std::string &s, char delim);
 
 
+
 int main(int argc, char * argv[]){
+
     if(argc <= 1){
         cout<<"please input query to start or use script=filename to start SQL!"<<endl;
         exit(1);
@@ -59,6 +63,7 @@ int main(int argc, char * argv[]){
             string filename = "";
             string pkcolumn = "";
             int num_threads = 10;
+
             for(auto p : query.substr(7)){
                 if(p == ';' | p == ' '){
                     if(filename == ""){
@@ -77,8 +82,14 @@ int main(int argc, char * argv[]){
 
             }
             temp = "";
-            //read script sql build thread
 
+            //read script sql build thread
+            bool locks[num_threads];
+            memset(locks, false, num_threads*sizeof(bool));
+
+            ThreadPool threads(num_threads);
+            string transbuffer = "";
+            //read .sql file to transcations
             ifstream file(filename);
             if(!file.is_open()){
                 cout<< "file cannot opened"<<endl;
@@ -89,13 +100,29 @@ int main(int argc, char * argv[]){
                     continue;
                 if(util::compareString(temp.substr(temp.length()-1) , ";")){
                     buffer +=" " + temp;
-                    //deal with buffer
+                    //deal with transcation
                     if(buffer.find("BEGIN TRANSACTION") != string::npos){
-                        buffer = buffer.substr(18);
+                        string t_temp = "";
+                        //filter out BEGIN TRANSACTION
+                        transbuffer = buffer.substr(18);
+                        while(getline(file, t_temp)){
+                            transbuffer += " " + t_temp;
+                            if(transbuffer.find("END TRANSACTION") != string::npos){
+
+                                //threads.doJob(executeTransaction, transbuffer, pkcolumn);
+                                //threads.doJob(std::bind(testthread, 1));
+                                cout << "execute transcation" <<endl;
+                                cout << transbuffer <<endl;
+                                transbuffer = "";
+                                break;
+                            }
+                        }
+
                     }
-                    else if(buffer.find("COMMIT") != string::npos|buffer.find("END TRANSACTION") != string::npos){
-                        //do save using sql parser
+                    else{
+                        //execute query directly
                         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
+                        // check whether the parsing was successful
                         if (result->isValid()) {
                             for (unsigned i = 0; i < result->size(); ++i) {
                                 //run sql query
@@ -107,15 +134,12 @@ int main(int argc, char * argv[]){
                             cout << "Given string is not a valid SQL query." << endl
                                  << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
                         }
-                        continue;
                     }
-                    cout << "buffer:"<<buffer <<endl;
 
                     buffer = "";
                 } else
                     buffer += " " + temp;
             }
-
 
 
             return 0;
