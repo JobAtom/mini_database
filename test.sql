@@ -12,34 +12,31 @@ INSERT INTO account VALUES ( 3 , 1, 10000);
 
 BEGIN TRANSACTION
 UPDATE person
-SET transstatus=’start’
+SET transstatus='start'
 WHERE personid=1;
 SELECT accountid FROM account WHERE personid=1;
-/* pick one of the accounts, assume it is accountid=100 */
-/* next statement should not fail */
+
 UPDATE account
 SET balance=balance-1
 WHERE accountid=1;
 UPDATE person
-SET transstatus=’end’
+SET transstatus='end'
 WHERE personid=1;
 COMMIT;
 END TRANSACTION;
 
 
 BEGIN TRANSACTION
-INSERT INTO person VALUES(1,’Person 1’,’insert’);
+INSERT INTO person VALUES(1,'Person 1','insert');
 UPDATE person
-SET transstatus=’start’
+SET transstatus='start'
 WHERE personid=1;
 SELECT accountid FROM account WHERE personid=1;
-/* pick one of the accounts, assume it is accountid=100 */
-/* next statement should not fail */
 UPDATE account
 SET balance=balance-1
 WHERE accountid=100;
 UPDATE person
-SET transstatus=’end’
+SET transstatus='end'
 WHERE personid=1;
 COMMIT;
 END TRANSACTION;
