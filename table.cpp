@@ -466,5 +466,277 @@ bool table::insertSelect(hsql::InsertStatement *stmt, map<string, table*> &table
 
 }
 
+//insert check
+bool table::insertcheck(hsql::InsertStatement *stmt) {
+
+    if(stmt->columns != NULL && stmt->columns->size() != stmt->values->size()){
+        cout <<"Column count doesn't match value count"<<endl;
+        return false;
+    }
+    if(stmt->columns == NULL && table_cols.size() != stmt->values->size()){
+        cout <<"INSERT has different number of columns than target columns"<<endl;
+        return false;
+    }
+    if(stmt->columns != NULL){
+        for(char* col_name : *stmt->columns){
+            auto it = getColumn(col_name);
+            if(it == NULL){
+                cout <<"Unknown column "<<col_name<<" in table list'"<<endl;
+                return false;
+            }
+        }
+    }
+    fstream os(filename, ios::in|ios::out|ios::binary|ios::app);
+    if(!os.is_open()){
+        cout << "cannot open table file" <<endl;
+        return false;
+    }
+
+    //check insert type
+    column* primary = getPrimaryKey();
+    for(int i=0; i < table_cols.size(); i++){
+
+        if(table_cols[i]->flag == "CHAR"){
+            if((*stmt->values)[i]->type == hsql::kExprLiteralString){
+                const char* str = (*stmt->values)[i]->name ;
+                if( strlen(str) > table_cols[i]->element_truesize ){
+                    cout << "Wrong Char size" << endl;
+                    return false;
+                }
+                if(primary != nullptr && util::compareString(table_cols[i]->name, primary->name)){
+                    cout << "check primary key values"<<endl;
+                    for(int j=0 ; j < getRowlength(); j++){
+                        os.seekg(j * rowSize + table_cols[i]->col_offset);
+                        char *bytes = new char[table_cols[i]->element_truesize];
+                        os.read(bytes, table_cols[i]->element_truesize);
+                        if(util::compareString(bytes, str)){
+                            cout<<"Can't insert duplicate values to primary key column"<<endl;
+                            delete bytes;
+                            return false;
+                        }
+
+                    }
+                }
+
+            }
+            else{
+                const char* str = to_string( (*stmt->values)[i]->ival ).c_str();
+                if( strlen(str) > table_cols[i]->element_truesize ){
+                    cout << "Wrong Char size" << endl;
+                    return false;
+                }
+                if(primary!=nullptr&&util::compareString(table_cols[i]->name, primary->name)){
+                    for(int j=0 ; j < getRowlength(); j++){
+                        os.seekg(j * rowSize + table_cols[i]->col_offset);
+                        char *bytes = new char[table_cols[i]->element_truesize];
+                        os.read(bytes, table_cols[i]->element_truesize);
+                        if(util::compareString(bytes, str)){
+                            cout<<"Can't insert duplicate values to primary key column"<<endl;
+                            delete bytes;
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        else{
+            if((*stmt->values)[i]->type == hsql::kExprLiteralString){
+                cout<<"need a int value instead of a string"<<endl;
+                return false;
+            }
+            if(primary!= nullptr && util::compareString(table_cols[i]->name, primary->name)){
+                for(int j=0 ; j < getRowlength(); j++){
+                    os.seekg(j * rowSize + table_cols[i]->col_offset);
+                    char *bytes = new char[table_cols[i]->element_truesize];
+                    os.read(bytes, table_cols[i]->element_truesize);
+                    //cout  << bytes <<endl;
+                    if(util::compareString(bytes, (char*)&(*stmt->values)[i]->ival)){
+                        cout<<"Can't insert duplicate values to primary key column"<<endl;
+                        delete bytes;
+                        return false;
+                    }
+
+                }
+            }
+
+        }
+    }
+    os.close();
+
+    return true;
+}
+
+//update check
+bool table::updatecheck(hsql::UpdateStatement *stmt) {
+    column* col = getColumn((*stmt->updates)[0]->column);
+    bool updated = false;
+    if(col == NULL){
+        cout << "no such column in table to update" <<endl;
+        return false;
+    }
+    if(stmt->where == nullptr){
+        //set all column to same value
+    }
+    else {
+        fstream os(getName(), ios::in|ios::out|ios::binary);
+
+        for (int i = 0; i < getRowlength(); i++) {
+            if (stmt->where->expr2->type == hsql::kExprLiteralInt || stmt->where->expr->type == hsql::kExprLiteralInt) {
+                //select column
+                string colName;
+                int compareNum;
+                if (stmt->where->expr2->type == hsql::kExprLiteralInt) {
+                    if (stmt->where->expr->type == hsql::kExprLiteralString) {
+                        cout << "cannot do compare between int and char" << endl;
+                        return false;
+                    }
+                    colName = stmt->where->expr->name;
+                    compareNum = (int) stmt->where->expr2->ival;
+                } else {
+                    if (stmt->where->expr2->type == hsql::kExprLiteralString) {
+                        cout << "cannot do compare between int and char" << endl;
+                        return false;
+                    }
+                    colName = stmt->where->expr2->name;
+                    compareNum = (int) stmt->where->expr->ival;
+                }
+                column *tempcol = NULL;
+                //check if table have this column
+                for (auto col: table_cols) {
+                    if (colName == col->name) {
+                        tempcol = col;
+                    }
+                }
+                if (tempcol == NULL) {
+                    cout << "column " << colName << " do not exist in table" << endl;
+                    return false;
+                }
+                //get column value
+                os.seekg(i * getrowSize() + tempcol->col_offset);
+                char *bytes = new char[tempcol->element_truesize];
+                os.read(bytes, tempcol->element_truesize);
+                //check =
+                if (stmt->where->opChar == '=') {
+                    if (tempcol->flag == "CHAR") {
+                        cout << "cannot do = for char columns with int value" << endl;
+                        delete bytes;
+                        return false;
+                    }
+                    if (*(int *) bytes != compareNum) {
+                        delete bytes;
+                        continue;
+                    }
+                }
+                //check >
+                if (stmt->where->opChar == '>') {
+                    if (tempcol->flag == "CHAR") {
+                        cout << "cannot do > for char columns with int value" << endl;
+                        delete bytes;
+                        return false;
+                    }
+                    if (*(int *) bytes <= compareNum) {
+                        delete bytes;
+                        continue;
+                    }
+                }
+                //check <
+                if (stmt->where->opChar == '<') {
+                    if (tempcol->flag == "CHAR") {
+                        cout << "cannot do < for char columns with int value" << endl;
+                        delete bytes;
+                        return false;
+                    }
+                    if (*(int *) bytes >= compareNum) {
+                        delete bytes;
+                        continue;
+                    }
+                }
+
+            }
+            if (stmt->where->expr->type == hsql::kExprColumnRef && stmt->where->expr2->type == hsql::kExprColumnRef)
+                continue;
+            //do char
+            if (stmt->where->expr2->type == hsql::kExprLiteralString ||
+                stmt->where->expr->type == hsql::kExprLiteralString) {
+                //select column
+                string colName;
+                char *compareChar;
+                if (stmt->where->expr2->type == hsql::kExprLiteralString) {
+                    colName = stmt->where->expr->name;
+                    compareChar = stmt->where->expr2->name;
+                } else {
+                    colName = stmt->where->expr2->name;
+                    compareChar = stmt->where->expr->name;
+                }
+                column *tempcol = NULL;
+                //check if table have this column
+                for (auto col: table_cols) {
+                    if (colName == col->name) {
+                        tempcol = col;
+                    }
+                }
+                if (tempcol == NULL) {
+                    cout << "column " << colName << " do not exist in table" << endl;
+                    return false;
+                }
+                //get column value
+                os.seekg(i * getrowSize() + tempcol->col_offset);
+                char *bytes = new char[tempcol->element_truesize];
+                os.read(bytes, tempcol->element_truesize);
+                //check =
+                if (stmt->where->opChar == '=') {
+                    if (!util::compareString(bytes, compareChar)) {
+                        delete bytes;
+                        continue;
+                    }
+                }
+                    //check >
+                else if (stmt->where->opChar == '>') {
+                    if (util::compareChar(bytes, compareChar) != 1) {
+                        delete bytes;
+                        continue;
+                    }
+                }
+                    //check <
+                else if (stmt->where->opChar == '<') {
+                    if (util::compareChar(bytes, compareChar) != -1) {
+                        delete bytes;
+                        continue;
+                    }
+                }
+
+            }
+            //do update
+
+            if (col != NULL) {
+
+                if (col->flag == "CHAR") {
+                    if (((*stmt->updates)[0]->value)->type == hsql::kExprLiteralString) {
+
+                        updated = true;
+
+                    } else {
+
+                        updated = true;
+                    }
+                } else {
+
+                    updated = true;
+
+                }
+            }
+
+        }
+        os.close();
+    }
+    if(updated)
+        return true;
+    else{
+        cout<<"where condition is wrong"<<endl;
+        return false;
+    }
+
+}
+
 
 

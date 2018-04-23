@@ -25,10 +25,10 @@ using namespace std;
 
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list);
 void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list);
-void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list);
+bool insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list, bool check);
 void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list);
 void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
-void executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list);
+bool executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list, bool check);
 void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt);
 
 void loadFromFile(map<string, table*> &map_list);
@@ -230,7 +230,7 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
         case hsql::kStmtInsert:
             cout << "Insert" <<endl;
-            insertTable((hsql::InsertStatement*)stmt, table_list);
+            insertTable((hsql::InsertStatement*)stmt, table_list, false);
             break;
         case hsql::kStmtShow:
             cout << "Show" <<endl;
@@ -238,7 +238,7 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
         case hsql::kStmtUpdate:
             cout << "Updaet" <<endl;
-            executeUpdate((hsql::UpdateStatement*)stmt, table_list);
+            executeUpdate((hsql::UpdateStatement*)stmt, table_list, false);
         default:
             break;
     }
@@ -312,25 +312,35 @@ void createTable(hsql::CreateStatement *stmt, map<string, table*> &table_list){
     os.close();
 
 }
-void insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list){
+bool insertTable(hsql::InsertStatement *stmt, map<string, table*> &table_list, bool check){
     cout<<"Insert into table : "<< stmt->tableName << endl;
 
     table* totable = util::getTable(stmt->tableName, table_list);
     if(totable == NULL){
         cout<<"table "<<stmt->tableName<<" not exits"<<endl;
-        return;
+        return false;
     }
 
-    if (stmt->type == hsql::InsertStatement::kInsertValues){
+    if (stmt->type == hsql::InsertStatement::kInsertValues&& !check){
         if(totable->insert(stmt)){
             cout << "insert successful" << endl;
+            return true;
         }
     }
+    //check insert
+    if (stmt->type == hsql::InsertStatement::kInsertValues&&check){
+        if(totable->insertcheck(stmt)){
+            return true;
+        }
+    }
+
     if (stmt->type == hsql::InsertStatement::kInsertSelect){
         if(totable->insertSelect(stmt, table_list)){
             cout << "insert successful" << endl;
+            return true;
         }
     }
+    return false;
 
 }
 
@@ -426,20 +436,27 @@ void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt){
 
 }
 
-void executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list){
+bool executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list, bool check){
     if(stmt->table->type == hsql::kTableName) {
         table *totable = util::getTable(stmt->table->name, table_list);
         if (totable == NULL) {
             cout << "did not find table " << stmt->table->name << " from database" << endl;
-            return;
+            return false;
         }
         if(totable != nullptr){
-            if(totable->update(stmt))
-                cout << "update successful"<<endl;
-            else
-                cout << "update false" << endl;
+
+            if(totable->update(stmt)&&!check){
+                cout << "update successful" << endl;
+                return true;
+            }
+            if(totable->updatecheck(stmt)&&check){
+                return true;
+            }
+
         }
     }
+    cout << "update false"<<endl;
+    return false;
 }
 
 //need more founctions
