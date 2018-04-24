@@ -18,6 +18,8 @@
 #include <pthread.h>
 #include "util.h"
 #include "ThreadPool.cpp"
+#include <algorithm>
+
 
 
 
@@ -30,14 +32,19 @@ void executeShow(hsql::ShowStatement *stmt, map<string, table*> &table_list);
 void executeSelect(hsql::SelectStatement *stmt,  map<string, table*> &table_list);
 bool executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list, bool check);
 void joinTable(table* t1, table* t2, hsql::SelectStatement *stmt);
+void executeTransaction(string transbuffer, vector<string> lockitem);
 
 void loadFromFile(map<string, table*> &map_list);
 void saveToFile(map<string, table*> &map_list);
 void printTableList(map<string, table*> table_list);
 void loadTableList(map<string, table*> & table_list);
 inline std::vector<std::string> split(const std::string &s, char delim);
+void Lowercase(string &s);
+string removespace(string s);
 
 
+map<string, int> locks;
+map<string, table*> table_list;
 
 int main(int argc, char * argv[]){
 
@@ -51,7 +58,7 @@ int main(int argc, char * argv[]){
         query += " ";
     }
 
-    map<string, table*> table_list;
+
 
     loadTableList(table_list);
 
@@ -85,13 +92,12 @@ int main(int argc, char * argv[]){
             temp = "";
 
             //read script sql build thread
-            bool locks[num_threads];
-            memset(locks, false, num_threads*sizeof(bool));
 
-            //map<string, int> locks;
+            vector<string> lockitem;
+
 
             ThreadPool threads(num_threads);
-            string transbuffer = "";
+            string transbuffer;
             //read .sql file to transcations
             ifstream file(filename);
             if(!file.is_open()){
@@ -101,21 +107,27 @@ int main(int argc, char * argv[]){
             while(getline(file, temp)){
                 if(temp.length() < 1)
                     continue;
+                Lowercase(temp);
                 if(util::compareString(temp.substr(temp.length()-1) , ";")){
                     buffer +=" " + temp;
                     //deal with transcation
-                    if(buffer.find("BEGIN TRANSACTION") != string::npos){
+                    if(buffer.find("begin transaction") != string::npos){
                         string t_temp = "";
                         //filter out BEGIN TRANSACTION
                         transbuffer = buffer.substr(18);
                         while(getline(file, t_temp)){
+                            Lowercase(t_temp);
                             transbuffer += " " + t_temp;
+                            if(t_temp.find("where") != string::npos){
+                                string substring = t_temp.substr(t_temp.find("where") + 6);
+                                substring = substring.substr(0, substring.find(";"));
+                                vector<string> split_string = split(substring, '=');
+                                lockitem.push_back(removespace(split_string[0]) + removespace(split_string[1]));
 
-                            if(transbuffer.find("END TRANSACTION") != string::npos){
-                                //threads.doJob(executeTransaction, transbuffer, pkcolumn, lockid, &locks);
-                                //threads.doJob(std::bind(testthread, 1));
-                                cout << "execute transcation" <<endl;
-                                cout << transbuffer <<endl;
+                            }
+                            if(transbuffer.find("end transaction") != string::npos){
+                                cout << "execute transaction" << endl;
+                                threads.doJob(bind(executeTransaction, transbuffer, lockitem));
                                 transbuffer = "";
                                 break;
                             }
@@ -243,6 +255,7 @@ void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list)
             break;
     }
 }
+
 
 
 void printTableList(map<string, table*> table_list){
@@ -539,4 +552,123 @@ inline std::vector<std::string> split(const std::string &s, char delim) {
     }
 
     return elems;
+}
+void Lowercase(string &s){
+    for (int i=0; s[i]; i++) s[i] = tolower(s[i]);
+}
+string removespace(string s){
+    string temp;
+    for (int i=0; s[i];i++){
+        if(s[i] == ' ')
+            continue;
+        temp += s[i];
+    }
+    return temp;
+}
+
+void executeTransaction(string transbuffer, vector<string> lockitem){
+    //lock on the record
+
+    for(auto item: lockitem){
+        while(true){
+            if(locks.find(item) != locks.end() && locks[item] == 0)
+                break;
+            if(locks.find(item) == locks.end())
+                break;
+        }
+    }
+    //add locd to locks
+    for(auto item: lockitem){
+        if(locks.find(item) != locks.end())
+            locks[item] = 1;
+        else
+            locks.insert(make_pair(item, 1));
+    }
+
+    //check if the transbuffer can be executed.
+    vector<string> querys = split(transbuffer, ';');
+    bool cancommit = true;
+
+    for(auto query : querys){
+        if(query.find("end transaction") != string::npos || query.find("commit") != string::npos)
+            continue;
+
+        hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+        // check whether the parsing was successful
+        if (result->isValid()) {
+            for (unsigned i = 0; i < result->size(); ++i) {
+                //run sql query
+
+
+                //check insert
+                if(query.find("insert") != string::npos){
+                    hsql::InsertStatement *stmt = (hsql::InsertStatement*)result->getMutableStatement(i);
+                    table* totable = util::getTable(stmt->tableName, table_list);
+                    if(totable == NULL)
+                        cancommit = false;
+                    if(totable != NULL && !totable->insertcheck(stmt))
+                        cancommit = false;
+
+                }
+
+                if(query.find("update") != string::npos){
+                    hsql::UpdateStatement *stmt = (hsql::UpdateStatement*)result->getMutableStatement(i);
+                    table* totable = util::getTable(stmt->table->name, table_list);
+                    if(totable == NULL)
+                    {
+                        cout << "cannot update this statement"<< endl;
+                        cancommit = false;
+                    }
+                    if(totable != NULL && !totable->updatecheck(stmt))
+                    {
+                        cout << "cannot update this statement"<< endl;
+                        cancommit = false;
+                    }
+
+                }
+
+
+            }
+        } else {
+            //split update to two querys and check again
+            if(query.find("update") != string::npos){
+                string select_item = query.substr(query.find("set") + 3, query.find("where") - query.find("set") - 3);
+                select_item = split(select_item, '=')[0];
+                string table = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
+                string where = query.substr(query.find("where") + 5, query.find(";") - query.find("where") - 5);
+
+                string select_query = "select " + select_item + " from " + table + " where " + where + ";";
+                string update_query = "update " + table + " set " + select_item + " = ?" + " where " + where + ";";
+                cout << "((((((((((((((("<<endl;
+                cout << select_query<< endl;
+                cout << update_query<<endl;
+
+            }
+
+            cout << "Given string is not a valid SQL query." << endl
+                 << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+            cancommit = false;
+        }
+
+        cout << "find query" << query << endl;
+        if(cancommit == false)
+            break;
+    }
+
+    //commit
+    if(cancommit){
+
+    }
+
+
+
+
+    //execute the transbuffer
+
+
+    //unlock
+    for(auto item:lockitem){
+        locks[item] = 0;
+    }
+
 }

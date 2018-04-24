@@ -8,9 +8,12 @@
 #include <condition_variable>
 #include <queue>
 #include <functional>
+#include <map>
+#include <string>
+#include <vector>
 #include <chrono>
 
-
+using namespace std;
 class ThreadPool
 {
 public:
