@@ -73,6 +73,7 @@ int main(int argc, char * argv[]){
             int num_threads = 10;
 
             for(auto p : query.substr(7)){
+
                 if(p == ';' | p == ' '){
                     if(filename == ""){
                         filename = temp;
@@ -91,13 +92,14 @@ int main(int argc, char * argv[]){
             }
             temp = "";
 
+
             //read script sql build thread
 
             vector<string> lockitem;
 
 
             ThreadPool threads(num_threads);
-            string transbuffer;
+            string transbuffer="";
             //read .sql file to transcations
             ifstream file(filename);
             if(!file.is_open()){
@@ -105,19 +107,25 @@ int main(int argc, char * argv[]){
             }
             string buffer="";
             while(getline(file, temp)){
-                if(temp.length() < 1)
+                string rs_temp = removespace(temp);
+                if(rs_temp.length() <= 1)
                     continue;
                 Lowercase(temp);
-                if(util::compareString(temp.substr(temp.length()-1) , ";")){
-                    buffer +=" " + temp;
+                //if(util::compareString(temp.substr(temp.length()-1), ";") == 1){
+                if(temp.find(";") != string::npos){
+                    buffer += " " + temp;
                     //deal with transcation
                     if(buffer.find("begin transaction") != string::npos){
                         string t_temp = "";
                         //filter out BEGIN TRANSACTION
                         transbuffer = buffer.substr(18);
                         while(getline(file, t_temp)){
+                            rs_temp = removespace(t_temp);
+                            if(rs_temp.length() <= 1)
+                                continue;
                             Lowercase(t_temp);
-                            transbuffer += " " + t_temp;
+                            transbuffer = transbuffer +  " " + t_temp;
+                            //cout << transbuffer << endl;
                             if(t_temp.find("where") != string::npos){
                                 string substring = t_temp.substr(t_temp.find("where") + 6);
                                 substring = substring.substr(0, substring.find(";"));
@@ -127,7 +135,9 @@ int main(int argc, char * argv[]){
                             }
                             if(transbuffer.find("end transaction") != string::npos){
                                 cout << "execute transaction" << endl;
-                                threads.doJob(bind(executeTransaction, transbuffer, lockitem));
+                                cout << transbuffer << endl;
+                                cout << "length: " << transbuffer.length() << endl;
+                                //threads.doJob(bind(executeTransaction, transbuffer, lockitem));
                                 transbuffer = "";
                                 break;
                             }
@@ -137,6 +147,7 @@ int main(int argc, char * argv[]){
                     else{
                         //execute query directly
                         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
+
                         // check whether the parsing was successful
                         if (result->isValid()) {
                             for (unsigned i = 0; i < result->size(); ++i) {
@@ -154,6 +165,7 @@ int main(int argc, char * argv[]){
                     buffer = "";
                 } else
                     buffer += " " + temp;
+
             }
 
 
@@ -171,7 +183,7 @@ int main(int argc, char * argv[]){
         buffer << file.rdbuf();
         string wholequery = "";
         for(auto c : buffer.str()){
-            if(c != '\r')
+            if(c != '\r' )
                 wholequery += c;
         }
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(wholequery);
@@ -554,12 +566,23 @@ inline std::vector<std::string> split(const std::string &s, char delim) {
     return elems;
 }
 void Lowercase(string &s){
-    for (int i=0; s[i]; i++) s[i] = tolower(s[i]);
+    //for (int i=0; s[i]; i++) s[i] = tolower(s[i]);
+    int i = 0;
+    char c;
+    while(s[i]){
+        if(s[i] <='Z' && s[i] >= 'A'){
+            c = s[i];
+            s[i] = tolower(c);
+            i++;
+            continue;
+        }
+        i ++;
+    }
 }
 string removespace(string s){
     string temp;
     for (int i=0; s[i];i++){
-        if(s[i] == ' ')
+        if(s[i] == ' ' )
             continue;
         temp += s[i];
     }
@@ -568,7 +591,6 @@ string removespace(string s){
 
 void executeTransaction(string transbuffer, vector<string> lockitem){
     //lock on the record
-
     for(auto item: lockitem){
         while(true){
             if(locks.find(item) != locks.end() && locks[item] == 0)
@@ -586,10 +608,12 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     }
 
     //check if the transbuffer can be executed.
+
     vector<string> querys = split(transbuffer, ';');
     bool cancommit = true;
 
     for(auto query : querys){
+        cout << "querys:::::::::::: " << query << endl;
         if(query.find("end transaction") != string::npos || query.find("commit") != string::npos)
             continue;
 
@@ -632,6 +656,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
         } else {
             //split update to two querys and check again
             if(query.find("update") != string::npos){
+                //cout << "find updated" << query << endl;
                 string select_item = query.substr(query.find("set") + 3, query.find("where") - query.find("set") - 3);
                 select_item = split(select_item, '=')[0];
                 string table = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
@@ -639,9 +664,9 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 
                 string select_query = "select " + select_item + " from " + table + " where " + where + ";";
                 string update_query = "update " + table + " set " + select_item + " = ?" + " where " + where + ";";
-                cout << "((((((((((((((("<<endl;
-                cout << select_query<< endl;
-                cout << update_query<<endl;
+                //cout << "((((((((((((((("<<endl;
+                //cout << select_query<< endl;
+                //cout << update_query<<endl;
 
             }
 
