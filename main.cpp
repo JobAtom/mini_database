@@ -576,6 +576,8 @@ void Lowercase(string &s){
             i++;
             continue;
         }
+        if(s[i] == '\r')
+            s[i] = ' ';
         i ++;
     }
 }
