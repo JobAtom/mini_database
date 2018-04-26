@@ -56,7 +56,7 @@ int util::compareChar(const char* str1, const char* str2){
         return 0;
     return 1;
 }
-bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*>> cols, table* t){
+bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*>> cols, table* t, int &selectvalue){
     ifstream os(t->getName(), ios::in|ios::binary);
 
     if(!os.is_open()){
@@ -256,8 +256,12 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
                 os.read(bytes, col->element_truesize);
 
 
-                if ( col->flag == "INT")
+                if ( col->flag == "INT"){
                     cout << left << setw(8) << setfill(' ') << *(int *) bytes;
+                    selectvalue = *(int *) bytes;
+
+                }
+
                 else {
                     cout << left << setw(col->element_size + 2 > 8 ? col->element_size + 2 : 8)
                          << setfill(' ') << bytes;

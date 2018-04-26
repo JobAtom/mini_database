@@ -199,6 +199,7 @@ vector<pair<string, column*>> table::select(hsql::SelectStatement *stmt){
 }
 
 bool table::update(hsql::UpdateStatement *stmt){
+
     column* col = getColumn((*stmt->updates)[0]->column);
     bool updated = false;
     if(col == NULL){

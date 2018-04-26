@@ -24,7 +24,7 @@ public:
     static bool compareString(const std::string& str1, const char* str2);
     static bool compareString(const char* str1, const char* str2);
     static int compareChar(const char* str1, const char* str2);
-    static bool PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*>> cols, table* t);
+    static bool PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*>> cols, table* t, int &selectvalue);
     static bool PrintJoinRecords(hsql::SelectStatement *stmt, vector<pair<string, column*>> colsleft, vector<pair<string, column*>> colsright, table* tleft, table* tright);
 
 

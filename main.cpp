@@ -135,9 +135,9 @@ int main(int argc, char * argv[]){
                             }
                             if(transbuffer.find("end transaction") != string::npos){
                                 cout << "execute transaction" << endl;
-                                cout << transbuffer << endl;
-                                cout << "length: " << transbuffer.length() << endl;
-                                //threads.doJob(bind(executeTransaction, transbuffer, lockitem));
+                                //cout << transbuffer << endl;
+
+                                threads.doJob(bind(executeTransaction, transbuffer, lockitem));
                                 transbuffer = "";
                                 break;
                             }
@@ -145,6 +145,7 @@ int main(int argc, char * argv[]){
 
                     }
                     else{
+
                         //execute query directly
                         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
 
@@ -427,7 +428,8 @@ void executeSelect(hsql::SelectStatement *stmt, map<string, table*> &table_list)
 
         if(totable != nullptr) {
             //totable->select(stmt);
-            util::PrintRecords(stmt, totable->select(stmt), totable);
+            int selectvalue = 0;
+            util::PrintRecords(stmt, totable->select(stmt), totable, selectvalue);
         }
     }
     else{//do join
@@ -469,14 +471,17 @@ bool executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list,
             return false;
         }
         if(totable != nullptr){
+            if(!check){
+                if(totable->update(stmt)){
+                    cout << "update successful" << endl;
+                    return true;
+                }
+            } else{
+                if(totable->updatecheck(stmt)){
+                    return true;
+                }
+            }
 
-            if(totable->update(stmt)&&!check){
-                cout << "update successful" << endl;
-                return true;
-            }
-            if(totable->updatecheck(stmt)&&check){
-                return true;
-            }
 
         }
     }
@@ -584,7 +589,7 @@ void Lowercase(string &s){
 string removespace(string s){
     string temp;
     for (int i=0; s[i];i++){
-        if(s[i] == ' ' )
+        if(s[i] == ' ' || s[i] == '\r' )
             continue;
         temp += s[i];
     }
@@ -594,12 +599,16 @@ string removespace(string s){
 void executeTransaction(string transbuffer, vector<string> lockitem){
     //lock on the record
     for(auto item: lockitem){
+        int sleep_time = 1000;
         while(true){
             if(locks.find(item) != locks.end() && locks[item] == 0)
                 break;
             if(locks.find(item) == locks.end())
                 break;
+            this_thread::sleep_for(chrono::milliseconds(sleep_time));
+            sleep_time *=2;
         }
+
     }
     //add locd to locks
     for(auto item: lockitem){
@@ -610,15 +619,18 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     }
 
     //check if the transbuffer can be executed.
-
     vector<string> querys = split(transbuffer, ';');
     bool cancommit = true;
+    vector<string> update_query;
 
     for(auto query : querys){
-        cout << "querys:::::::::::: " << query << endl;
+        string t_query = removespace(query);
+        if(t_query.length() < 1)
+            continue;
         if(query.find("end transaction") != string::npos || query.find("commit") != string::npos)
             continue;
 
+        query += ";";
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
         // check whether the parsing was successful
         if (result->isValid()) {
@@ -656,35 +668,146 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 
             }
         } else {
+
             //split update to two querys and check again
             if(query.find("update") != string::npos){
-                //cout << "find updated" << query << endl;
+
+                cout << "find updated" << query << endl;
                 string select_item = query.substr(query.find("set") + 3, query.find("where") - query.find("set") - 3);
                 select_item = split(select_item, '=')[0];
-                string table = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
+                string stable = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
                 string where = query.substr(query.find("where") + 5, query.find(";") - query.find("where") - 5);
+                string operation = "";
+                if(query.find("-")!= string::npos)
+                    operation="-";
+                else
+                    operation="+";
 
-                string select_query = "select " + select_item + " from " + table + " where " + where + ";";
-                string update_query = "update " + table + " set " + select_item + " = ?" + " where " + where + ";";
-                //cout << "((((((((((((((("<<endl;
-                //cout << select_query<< endl;
-                //cout << update_query<<endl;
+
+                string select_query = "select " + select_item + " from " + stable + " where " + where + ";";
+
+
+                //select query
+                int selectvalue = -1;
+                hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(select_query);
+                if (result->isValid()) {
+                    for (unsigned i = 0; i < result->size(); ++i) {
+                        //run sql query
+                        hsql::SelectStatement *stmt = (hsql::SelectStatement*)result->getMutableStatement(i);
+                        if(stmt->fromTable->type == hsql::kTableName){
+                            table* totable = util::getTable(stmt->fromTable->name, table_list);
+                            if(totable == NULL){
+                                cout<< "did not find table " << stmt->fromTable->name << " from database"<<endl;
+                                cancommit = false;
+                            }
+
+                            if(totable != nullptr) {
+                                util::PrintRecords(stmt, totable->select(stmt), totable, selectvalue);
+                                if(operation == "-")
+                                    selectvalue -= 1;
+                                else
+                                    selectvalue += 1;
+                                if(selectvalue <= 0)
+                                    cancommit = false;
+
+                            }
+                        }
+
+                    }
+                } else {
+                    //cout << "Given string is not a valid SQL query." << endl
+                     //    << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+                    cancommit = false;
+                }
+                //update query
+                string temp_update_query = "update " + stable + " set " + select_item + " = " + to_string(selectvalue) + " where " + where + ";";
+                update_query.push_back(temp_update_query);
+                result = hsql::SQLParser::parseSQLString(temp_update_query);
+                if (result->isValid()) {
+                    for (unsigned i = 0; i < result->size(); ++i) {
+                        //run sql query
+                        hsql::UpdateStatement *stmt = (hsql::UpdateStatement*)result->getMutableStatement(i);
+                        if(!executeUpdate(stmt, table_list, true)){
+                            cancommit = false;
+                        }
+                    }
+                } else {
+                    //cout << "Given string is not a valid SQL query." << endl
+                     //    << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+                    cancommit = false;
+                }
+
 
             }
+            else{
+                cout << "query is ****************:" << query << endl;
+                //cout << "Given string is not a valid SQL query." << endl
+                 //    << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+                cancommit = false;
+            }
 
-            cout << "Given string is not a valid SQL query." << endl
-                 << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
-            cancommit = false;
+
         }
 
-        cout << "find query" << query << endl;
+        //cout << "find query" << query << endl;
         if(cancommit == false)
             break;
     }
 
-    //commit
-    if(cancommit){
 
+    //commit
+    cout << "commit condition is " << cancommit << endl;
+    if(cancommit){
+        cout << "do commit" << endl;
+        int countupdate = 0;
+        for(auto query: querys){
+            string t_query = removespace(query);
+            if(t_query.length() < 1)
+                continue;
+            if(query.find("end transaction") != string::npos || query.find("commit") != string::npos)
+                continue;
+
+            query += ";";
+            cout << query << endl;
+            hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+
+            // check whether the parsing was successful
+            if (result->isValid()) {
+                for (unsigned i = 0; i < result->size(); ++i) {
+                    //run sql query
+
+                    executeStatement(result->getMutableStatement(i), table_list);
+                    saveToFile(table_list);
+
+                }
+            } else {
+                if(query.find("update") != string::npos){
+                    query = update_query[countupdate];
+                    countupdate += 1;
+                    cout << "updated query ________________:" << query << endl;
+                }
+                hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
+
+                // check whether the parsing was successful
+                if (result->isValid()) {
+                    for (unsigned i = 0; i < result->size(); ++i) {
+                        //run sql query
+
+                        executeStatement(result->getMutableStatement(i), table_list);
+                        saveToFile(table_list);
+
+                    }
+                }
+                else{
+                    cout << "((((((((((()))))))))))))))"<< endl;
+                    cout << query.length() << endl;
+                    cout << "Given string is not a valid SQL query." << endl
+                         << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
+                }
+
+            }
+
+        }
     }
 
 
