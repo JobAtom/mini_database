@@ -75,6 +75,8 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
             cout <<left<<setw(col->element_size +2 > 8 ? col->element_size+2 : 8)<<setfill(' ')<<it.first;
     }
     cout << endl;
+
+    vector<int> printedrecords;
     //print records
     for(int i = 0; i < t->getRowlength(); i++){
 
@@ -219,6 +221,8 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
         //check duplicates
         bool duplicates = false;
         for(int j = 0; j<i; j++){
+            if(find(printedrecords.begin(), printedrecords.end(), j)== printedrecords.end())
+                continue;
             int count_duplicates = 0;
             int countcol = 0;
             for(auto it:cols){
@@ -245,8 +249,10 @@ bool util::PrintRecords(hsql::SelectStatement *stmt, vector<pair<string, column*
         if(duplicates)
             continue;
         //do print
+
         for(auto it:cols) {
             column *col = it.second;
+            printedrecords.push_back(i);
 
             if (col != NULL) {
 

@@ -119,19 +119,24 @@ int main(int argc, char * argv[]){
                         string t_temp = "";
                         //filter out BEGIN TRANSACTION
                         transbuffer = buffer.substr(18);
+                        //first where
+                        if(transbuffer.find("where") != string::npos){
+                            string substring = transbuffer.substr(transbuffer.find("where") + 6);
+                            substring = substring.substr(0, substring.find(";"));
+                            vector<string> split_string = split(substring, '=');
+                            lockitem.push_back(removespace(split_string[0]) + removespace(split_string[1]));
+                        }
                         while(getline(file, t_temp)){
                             rs_temp = removespace(t_temp);
                             if(rs_temp.length() <= 1)
                                 continue;
                             Lowercase(t_temp);
                             transbuffer = transbuffer +  " " + t_temp;
-                            //cout << transbuffer << endl;
                             if(t_temp.find("where") != string::npos){
                                 string substring = t_temp.substr(t_temp.find("where") + 6);
                                 substring = substring.substr(0, substring.find(";"));
                                 vector<string> split_string = split(substring, '=');
                                 lockitem.push_back(removespace(split_string[0]) + removespace(split_string[1]));
-
                             }
                             if(transbuffer.find("end transaction") != string::npos){
                                 cout << "execute transaction" << endl;
@@ -605,6 +610,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                 break;
             if(locks.find(item) == locks.end())
                 break;
+            cout << "locks on " << item << endl;
             this_thread::sleep_for(chrono::milliseconds(sleep_time));
             sleep_time *=2;
         }
@@ -672,7 +678,6 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
             //split update to two querys and check again
             if(query.find("update") != string::npos){
 
-                cout << "find updated" << query << endl;
                 string select_item = query.substr(query.find("set") + 3, query.find("where") - query.find("set") - 3);
                 select_item = split(select_item, '=')[0];
                 string stable = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
@@ -707,7 +712,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                                     selectvalue -= 1;
                                 else
                                     selectvalue += 1;
-                                if(selectvalue <= 0)
+                                if(selectvalue < 0)
                                     cancommit = false;
 
                             }
@@ -740,7 +745,6 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 
             }
             else{
-                cout << "query is ****************:" << query << endl;
                 //cout << "Given string is not a valid SQL query." << endl
                  //    << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
                 cancommit = false;
@@ -768,7 +772,6 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                 continue;
 
             query += ";";
-            cout << query << endl;
             hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
 
             // check whether the parsing was successful
@@ -784,7 +787,6 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                 if(query.find("update") != string::npos){
                     query = update_query[countupdate];
                     countupdate += 1;
-                    cout << "updated query ________________:" << query << endl;
                 }
                 hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
 
@@ -799,8 +801,6 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                     }
                 }
                 else{
-                    cout << "((((((((((()))))))))))))))"<< endl;
-                    cout << query.length() << endl;
                     cout << "Given string is not a valid SQL query." << endl
                          << result->errorMsg() << "(" << result->errorLine() << ":" << result->errorColumn() << ")" << endl;
                 }
@@ -810,11 +810,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
         }
     }
 
-
-
-
     //execute the transbuffer
-
 
     //unlock
     for(auto item:lockitem){
