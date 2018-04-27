@@ -637,10 +637,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     for(auto item: lockitem) {
         int sleep_time = 1000;
         while (true) {
-            this_thread::sleep_for(chrono::milliseconds(sleep_time));
-            sleep_time *= 2;
-            //cout << "should lock on : " << item<< endl;
-            //cout << item << "condition is "<< locks[item] << endl;
+
             if (locks.find(item) != locks.end() && locks[item] == 0) {
                 locks[item] = 1;
                 break;
@@ -649,6 +646,8 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                 locks.insert(make_pair(item, 1));
                 break;
             }
+            this_thread::sleep_for(chrono::milliseconds(sleep_time));
+            sleep_time *= 2;
 
         }
     }
