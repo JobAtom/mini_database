@@ -16,8 +16,11 @@
 using namespace std;
 class ThreadPool
 {
+
 public:
 
+    std::queue <std::function <void (void)>> jobs_;
+    std::vector <std::thread> threads_;
     ThreadPool (int threads) : shutdown_ (false)
     {
         // Create the specified number of threads
@@ -86,6 +89,6 @@ protected:
     std::mutex lock_;
     std::condition_variable condVar_;
     bool shutdown_;
-    std::queue <std::function <void (void)>> jobs_;
-    std::vector <std::thread> threads_;
+
+
 };

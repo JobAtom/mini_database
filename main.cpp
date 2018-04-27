@@ -19,6 +19,8 @@
 #include "util.h"
 #include "ThreadPool.cpp"
 #include <algorithm>
+#include <mutex>
+
 
 
 
@@ -45,6 +47,12 @@ string removespace(string s);
 
 map<string, int> locks;
 map<string, table*> table_list;
+
+
+static pthread_mutex_t con1;
+static pthread_cond_t ok=PTHREAD_COND_INITIALIZER;
+mutex con;
+
 
 int main(int argc, char * argv[]){
 
@@ -95,7 +103,7 @@ int main(int argc, char * argv[]){
 
             //read script sql build thread
 
-            vector<string> lockitem;
+
 
 
             ThreadPool threads(num_threads);
@@ -119,6 +127,8 @@ int main(int argc, char * argv[]){
                         string t_temp = "";
                         //filter out BEGIN TRANSACTION
                         transbuffer = buffer.substr(18);
+                        vector<string> lockitem;
+                        lockitem.clear();
                         //first where
                         if(transbuffer.find("where") != string::npos){
                             string substring = transbuffer.substr(transbuffer.find("where") + 6);
@@ -150,14 +160,30 @@ int main(int argc, char * argv[]){
 
                     }
                     else{
-
+                        //check if all threads stoped
+//                        for(auto item: locks){
+//                            while(true){
+//                                cout << item.second << endl;
+//                                if(item.second == 0)
+//                                    break;
+//                                cout << "locks on " << item.first << endl;
+//                            }
+//
+//                        }
                         //execute query directly
+//                        while(!threads_id.empty()){
+//                            //wait;
+//                            cout << "wait" << endl;
+//                            cout << threads_id.size()<<endl;
+//
+//                        }
                         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
 
                         // check whether the parsing was successful
                         if (result->isValid()) {
                             for (unsigned i = 0; i < result->size(); ++i) {
                                 //run sql query
+
                                 executeStatement(result->getMutableStatement(i), table_list);
                                 saveToFile(table_list);
 
@@ -602,27 +628,84 @@ string removespace(string s){
 }
 
 void executeTransaction(string transbuffer, vector<string> lockitem){
-    //lock on the record
-    for(auto item: lockitem){
-        int sleep_time = 1000;
-        while(true){
-            if(locks.find(item) != locks.end() && locks[item] == 0)
-                break;
-            if(locks.find(item) == locks.end())
-                break;
-            cout << "locks on " << item << endl;
-            this_thread::sleep_for(chrono::milliseconds(sleep_time));
-            sleep_time *=2;
-        }
+//    //check queue if thread in or out
 
+
+    //lock on the record
+    con.lock();
+    for(auto item: lockitem) {
+        int sleep_time = 1000;
+        while (true) {
+            this_thread::sleep_for(chrono::milliseconds(sleep_time));
+            sleep_time *= 2;
+            if (locks.find(item) != locks.end() && locks[item] == 0) {
+                locks[item] = 1;
+                break;
+            }
+            if (locks.find(item) == locks.end()) {
+                locks.insert(make_pair(item, 1));
+                break;
+            }
+
+        }
     }
-    //add locd to locks
-    for(auto item: lockitem){
-        if(locks.find(item) != locks.end())
-            locks[item] = 1;
-        else
-            locks.insert(make_pair(item, 1));
-    }
+    con.unlock();
+
+
+    //threads_id.push(this_thread::get_id());
+
+//    string previous_item = "";
+//
+//    //lock
+//    con.lock();
+//    while(true){
+//
+//        int true_size = 0;
+//        map<string, int> temp_locks;
+//
+//        for(auto item: lockitem) {
+//
+//            if(item == previous_item){
+//                previous_item = item;
+//                true_size++;
+//                continue;
+//            }
+//            else if(locks.find(item) != locks.end() && locks[item] == 0)
+//            {
+//                temp_locks[item] = 1;
+//                locks[item] = 1;
+//                true_size++;
+//                previous_item = item;
+//                continue;
+//            }
+//
+//            else if(locks.find(item) == locks.end()){
+//
+//                temp_locks[item] = 1;
+//                locks.insert(make_pair(item, 1));
+//                true_size++;
+//                previous_item = item;
+//                continue;
+//            }
+//            previous_item = item;
+//        }
+//        if(true_size == lockitem.size()){
+//            con.unlock();
+//            break;
+//        }
+//        else {
+//            for (std::map<string, int>::iterator it = temp_locks.begin(); it != temp_locks.end(); ++it) {
+//                if (it->second == 1) {
+//                    locks[it->first] = 0;
+//                }
+//            }
+//        }
+//        //int v2 = rand() % 1000 + 1;
+//        this_thread::sleep_for(chrono::milliseconds(1000));
+//    }
+
+    //unlock
+    //con.unlock();
 
     //check if the transbuffer can be executed.
     vector<string> querys = split(transbuffer, ';');
@@ -813,8 +896,10 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     //execute the transbuffer
 
     //unlock
+
     for(auto item:lockitem){
         locks[item] = 0;
     }
+    //con.unlock();
 
 }
