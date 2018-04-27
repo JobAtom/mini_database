@@ -146,7 +146,8 @@ int main(int argc, char * argv[]){
                                 string substring = t_temp.substr(t_temp.find("where") + 6);
                                 substring = substring.substr(0, substring.find(";"));
                                 vector<string> split_string = split(substring, '=');
-                                lockitem.push_back(removespace(split_string[0]) + removespace(split_string[1]));
+                                if(find(lockitem.begin(), lockitem.end(), removespace(split_string[0] + removespace(split_string[1]))) == lockitem.end())
+                                    lockitem.push_back(removespace(split_string[0]) + removespace(split_string[1]));
                             }
                             if(transbuffer.find("end transaction") != string::npos){
                                 cout << "execute transaction" << endl;
@@ -638,6 +639,8 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
         while (true) {
             this_thread::sleep_for(chrono::milliseconds(sleep_time));
             sleep_time *= 2;
+            //cout << "should lock on : " << item<< endl;
+            //cout << item << "condition is "<< locks[item] << endl;
             if (locks.find(item) != locks.end() && locks[item] == 0) {
                 locks[item] = 1;
                 break;
@@ -900,6 +903,6 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     for(auto item:lockitem){
         locks[item] = 0;
     }
-    //con.unlock();
+
 
 }
