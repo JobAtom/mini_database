@@ -48,9 +48,7 @@ string removespace(string s);
 map<string, int> locks;
 map<string, table*> table_list;
 
-
-static pthread_mutex_t con1;
-static pthread_cond_t ok=PTHREAD_COND_INITIALIZER;
+queue <int> checkthread;
 mutex con;
 
 
@@ -152,7 +150,7 @@ int main(int argc, char * argv[]){
                             if(transbuffer.find("end transaction") != string::npos){
                                 cout << "execute transaction" << endl;
                                 //cout << transbuffer << endl;
-
+                                checkthread.push(1);
                                 threads.doJob(bind(executeTransaction, transbuffer, lockitem));
                                 transbuffer = "";
                                 break;
@@ -172,12 +170,10 @@ int main(int argc, char * argv[]){
 //
 //                        }
                         //execute query directly
-//                        while(!threads_id.empty()){
-//                            //wait;
-//                            cout << "wait" << endl;
-//                            cout << threads_id.size()<<endl;
 //
-//                        }
+                        while(!checkthread.empty()){
+                            //wait;
+                        }
                         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(buffer);
 
                         // check whether the parsing was successful
@@ -630,8 +626,6 @@ string removespace(string s){
 
 void executeTransaction(string transbuffer, vector<string> lockitem){
 //    //check queue if thread in or out
-
-
     //lock on the record
     con.lock();
     for(auto item: lockitem) {
@@ -902,6 +896,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     for(auto item:lockitem){
         locks[item] = 0;
     }
+    checkthread.pop();
 
 
 }
