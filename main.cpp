@@ -42,6 +42,7 @@ void printTableList(map<string, table*> table_list);
 void loadTableList(map<string, table*> & table_list);
 inline std::vector<std::string> split(const std::string &s, char delim);
 void Lowercase(string &s);
+bool check_true_size(vector<string> lockitem);
 string removespace(string s);
 
 
@@ -627,26 +628,40 @@ string removespace(string s){
 void executeTransaction(string transbuffer, vector<string> lockitem){
 //    //check queue if thread in or out
     //lock on the record
-    con.lock();
-    for(auto item: lockitem) {
-        int sleep_time = 1000;
-        while (true) {
+//    con.lock();
+//    for(auto item: lockitem) {
+//        int sleep_time = 1000;
+//        while (true) {
+//            //con.lock();
+//            //cout << item << "condition is : " << locks[item]<<endl;
+//            if (locks.find(item) != locks.end() && locks[item] == 0) {
+//                locks[item] = 1;
+//                //con.unlock();
+//                break;
+//            }
+//            if (locks.find(item) == locks.end()) {
+//                locks.insert(make_pair(item, 1));
+//                //con.unlock();
+//                break;
+//            }
+//
+//        }
+//
+//        this_thread::sleep_for(chrono::milliseconds(sleep_time));
+//        sleep_time *= 2;
+//    }
+//
+//    con.unlock();
 
-            if (locks.find(item) != locks.end() && locks[item] == 0) {
-                locks[item] = 1;
-                break;
-            }
-            if (locks.find(item) == locks.end()) {
-                locks.insert(make_pair(item, 1));
-                break;
-            }
-            this_thread::sleep_for(chrono::milliseconds(sleep_time));
-            sleep_time *= 2;
-
+    int sleep_time = 1000;
+    while(true){
+        if(check_true_size(lockitem)){
+            break;
         }
+        //int v2 = rand() % 1000 + 1;
+        this_thread::sleep_for(chrono::milliseconds(sleep_time));
+        sleep_time *= 2;
     }
-    con.unlock();
-
 
     //threads_id.push(this_thread::get_id());
 
@@ -891,11 +906,60 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     //execute the transbuffer
 
     //unlock
-
+    con.lock();
     for(auto item:lockitem){
+
         locks[item] = 0;
+
     }
     checkthread.pop();
+    con.unlock();
 
+}
 
+bool check_true_size(vector<string> lockitem){
+    con.lock();
+    int true_size = 0;
+    map<string, int> temp_locks;
+    string previous_item = "";
+    for(auto item: lockitem) {
+        if(item == previous_item){
+            previous_item = item;
+            true_size++;
+            continue;
+        }
+        else if(locks.find(item) != locks.end() && locks[item] == 0)
+        {
+            temp_locks[item] = 1;
+            locks[item] = 1;
+            true_size++;
+            previous_item = item;
+            continue;
+        }
+
+        else if(locks.find(item) == locks.end()){
+
+            temp_locks[item] = 1;
+            locks.insert(make_pair(item, 1));
+            true_size++;
+            previous_item = item;
+            continue;
+        }
+        previous_item = item;
+    }
+    if( true_size == lockitem.size()){
+        con.unlock();
+        return true;
+    }
+    else {
+        for (std::map<string, int>::iterator it = temp_locks.begin(); it != temp_locks.end(); ++it) {
+            if (it->second == 1) {
+                locks[it->first] = 0;
+            }
+        }
+        con.unlock();
+        return false;
+    }
+    con.unlock();
+    return false;
 }
