@@ -148,7 +148,7 @@ int main(int argc, char * argv[]){
                                     lockitem.push_back(removespace(split_string[0]) + removespace(split_string[1]));
                             }
                             if(transbuffer.find("end transaction") != string::npos){
-                                cout << "execute transaction" << endl;
+                                //cout << "execute transaction" << endl;
                                 //cout << transbuffer << endl;
                                 checkthread.push(1);
                                 threads.doJob(bind(executeTransaction, transbuffer, lockitem));
@@ -839,9 +839,8 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 
 
     //commit
-    cout << "commit condition is " << cancommit << endl;
     if(cancommit){
-        cout << "do commit" << endl;
+        //cout << "do commit" << endl;
         int countupdate = 0;
         for(auto query: querys){
             string t_query = removespace(query);
