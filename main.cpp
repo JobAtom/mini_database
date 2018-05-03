@@ -786,7 +786,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
             //split update to two querys and check again
             if(query.find("update") != string::npos ){
                 if(query.find("insert into") != string::npos )
-                    break;
+                    cancommit = false;;
                 string select_item = query.substr(query.find("set") + 3, query.find("where") - query.find("set") - 3);
                 select_item = split(select_item, '=')[0];
                 string stable = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
