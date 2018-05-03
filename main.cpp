@@ -43,6 +43,7 @@ void loadTableList(map<string, table*> & table_list);
 inline std::vector<std::string> split(const std::string &s, char delim);
 void Lowercase(string &s);
 bool check_true_size(vector<string> lockitem);
+void unlock_items(vector<string> lockitem, int x);
 string removespace(string s);
 
 
@@ -51,7 +52,7 @@ map<string, table*> table_list;
 
 queue <int> checkthread;
 mutex con;
-
+string output_file = "output.txt";
 
 int main(int argc, char * argv[]){
 
@@ -65,15 +66,17 @@ int main(int argc, char * argv[]){
         query += " ";
     }
 
-
-
     loadTableList(table_list);
+
+    ofstream myfile;
+    myfile.open (output_file);
+    myfile.close();
 
     if(query.find("script=")== 0)
     {
         //transcation part
         if(query.find("numthreads")){
-            cout<<"do transaction"<<endl;
+            cout<<"Start transaction"<<endl;
             string temp = "";
             string filename = "";
             string pkcolumn = "";
@@ -95,7 +98,6 @@ int main(int argc, char * argv[]){
                 }
                 else
                     temp += p;
-
             }
             temp = "";
 
@@ -203,7 +205,7 @@ int main(int argc, char * argv[]){
         }
 
         //read script and run sql by script
-        cout << "run script " << endl;
+        //cout << "run script " << endl;
         ifstream file(query.substr(7, query.length()-8));
         if(!file.is_open())
         {
@@ -275,23 +277,23 @@ int main(int argc, char * argv[]){
 void executeStatement(hsql::SQLStatement *stmt, map<string, table*> &table_list){
     switch (stmt->type()) {
         case hsql::kStmtCreate:
-            cout << "Create" <<endl;
+            //cout << "Create" <<endl;
             createTable((hsql::CreateStatement*)stmt, table_list);
             break;
         case hsql::kStmtSelect:
-            cout << "Select" <<endl;
+            //cout << "Select" <<endl;
             executeSelect((hsql::SelectStatement*)stmt, table_list);
             break;
         case hsql::kStmtInsert:
-            cout << "Insert" <<endl;
+            //cout << "Insert" <<endl;
             insertTable((hsql::InsertStatement*)stmt, table_list, false);
             break;
         case hsql::kStmtShow:
-            cout << "Show" <<endl;
+            //cout << "Show" <<endl;
             executeShow((hsql::ShowStatement*)stmt, table_list);
             break;
         case hsql::kStmtUpdate:
-            cout << "Updaet" <<endl;
+            //cout << "Update" <<endl;
             executeUpdate((hsql::UpdateStatement*)stmt, table_list, false);
         default:
             break;
@@ -502,7 +504,8 @@ bool executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list,
         if(totable != nullptr){
             if(!check){
                 if(totable->update(stmt)){
-                    cout << "update successful" << endl;
+                    //cout << "update successful" << endl;
+
                     return true;
                 }
             } else{
@@ -514,7 +517,7 @@ bool executeUpdate(hsql::UpdateStatement *stmt, map<string, table*> &table_list,
 
         }
     }
-    cout << "update false"<<endl;
+    //cout << "update false"<<endl;
     return false;
 }
 
@@ -654,14 +657,23 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 //    con.unlock();
 
     int sleep_time = 1000;
+    int sleep_count = 0;
     while(true){
         if(check_true_size(lockitem)){
             break;
         }
+        sleep_count++;
         //int v2 = rand() % 1000 + 1;
         this_thread::sleep_for(chrono::milliseconds(sleep_time));
-        sleep_time *= 2;
+        if(sleep_count > 3){
+            sleep_time = 1000;
+        }
+        else{
+            sleep_time *= 2;
+        }
     }
+
+
 
     //threads_id.push(this_thread::get_id());
 
@@ -724,6 +736,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
     vector<string> update_query;
 
     for(auto query : querys){
+
         string t_query = removespace(query);
         if(t_query.length() < 1)
             continue;
@@ -740,6 +753,7 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 
                 //check insert
                 if(query.find("insert") != string::npos){
+
                     hsql::InsertStatement *stmt = (hsql::InsertStatement*)result->getMutableStatement(i);
                     table* totable = util::getTable(stmt->tableName, table_list);
                     if(totable == NULL)
@@ -770,8 +784,9 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
         } else {
 
             //split update to two querys and check again
-            if(query.find("update") != string::npos){
-
+            if(query.find("update") != string::npos ){
+                if(query.find("insert into") != string::npos )
+                    break;
                 string select_item = query.substr(query.find("set") + 3, query.find("where") - query.find("set") - 3);
                 select_item = split(select_item, '=')[0];
                 string stable = query.substr(query.find("update") + 6, query.find("set") - query.find("update") -6);
@@ -854,10 +869,12 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
 
 
     //commit
+    int numberOfRowsModified = 0;
     if(cancommit){
         //cout << "do commit" << endl;
         int countupdate = 0;
         for(auto query: querys){
+            //cout << "query: " << query << endl;
             string t_query = removespace(query);
             if(t_query.length() < 1)
                 continue;
@@ -871,13 +888,13 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
             if (result->isValid()) {
                 for (unsigned i = 0; i < result->size(); ++i) {
                     //run sql query
-
                     executeStatement(result->getMutableStatement(i), table_list);
                     saveToFile(table_list);
 
                 }
             } else {
                 if(query.find("update") != string::npos){
+                    numberOfRowsModified++;
                     query = update_query[countupdate];
                     countupdate += 1;
                 }
@@ -887,10 +904,8 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
                 if (result->isValid()) {
                     for (unsigned i = 0; i < result->size(); ++i) {
                         //run sql query
-
                         executeStatement(result->getMutableStatement(i), table_list);
                         saveToFile(table_list);
-
                     }
                 }
                 else{
@@ -903,17 +918,10 @@ void executeTransaction(string transbuffer, vector<string> lockitem){
         }
     }
 
-    //execute the transbuffer
+    //execute the transbuffr
+    unlock_items(lockitem, numberOfRowsModified);
 
-    //unlock
-    con.lock();
-    for(auto item:lockitem){
 
-        locks[item] = 0;
-
-    }
-    checkthread.pop();
-    con.unlock();
 
 }
 
@@ -948,6 +956,15 @@ bool check_true_size(vector<string> lockitem){
         previous_item = item;
     }
     if( true_size == lockitem.size()){
+        //output affected rows
+        //ofstream myfile(output_file, ios::app);
+        //if(myfile.is_open()){
+            for(auto item: lockitem){
+                //myfile << "Row " << item <<" locked\n" ;
+                cout << "Row " << item <<" locked\n" ;
+            }
+            //myfile.close();
+        //}
         con.unlock();
         return true;
     }
@@ -962,4 +979,26 @@ bool check_true_size(vector<string> lockitem){
     }
     con.unlock();
     return false;
+}
+
+void unlock_items(vector<string> lockitem, int x){
+    //unlock
+    con.lock();
+    for(auto item:lockitem){
+        locks[item] = 0;
+    }
+    checkthread.pop();
+
+    //output affected rows
+    //ofstream myfile(output_file, ios::app);
+    //if(myfile.is_open()) {
+        //myfile << x <<" Row(s) Modified\n";
+        cout << x <<" Row(s) Modified\n";
+        for(auto item: lockitem){
+            //myfile << "Row " << item <<" unlocked\n";
+            cout << "Row " << item <<" unlocked\n";
+        }
+        //myfile.close();
+    //}
+    con.unlock();
 }
